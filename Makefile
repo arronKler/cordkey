@@ -2,14 +2,16 @@ PREFIX ?= $(HOME)/.local
 BINDIR ?= $(PREFIX)/bin
 APPDIR ?= /Applications
 BIN := bin/cordkey
+VERSION ?= 1.0.0
 APP := build/CordKey.app
+DMG := dist/CordKey-$(VERSION)-macos.dmg
 ICONSET := build/AppIcon.iconset
 SOURCES := $(wildcard Sources/cordkey/*.swift)
 PLIST := $(HOME)/Library/LaunchAgents/io.github.cordkey.cli.plist
 LOG := $(HOME)/Library/Logs/cordkey.log
 ARGS ?= --play f13
 
-.PHONY: build app app-install app-open install uninstall run watch devices clean service-install service-uninstall service-status
+.PHONY: build app dmg app-install app-open install uninstall run watch devices clean service-install service-uninstall service-status
 
 build: $(BIN)
 
@@ -55,6 +57,15 @@ app-install: app
 
 app-open: app
 	open "$(APP)"
+
+dmg: app
+	@rm -rf build/dmg-root "$(DMG)"
+	@mkdir -p dist build/dmg-root
+	@cp -R "$(APP)" "build/dmg-root/CordKey.app"
+	@ln -s /Applications "build/dmg-root/Applications"
+	@hdiutil create -volname "CordKey $(VERSION)" -srcfolder "build/dmg-root" -ov -format UDZO "$(DMG)"
+	@rm -rf build/dmg-root
+	@echo "Built $(DMG)"
 
 install: build
 	@mkdir -p "$(BINDIR)"

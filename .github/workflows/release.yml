@@ -1,0 +1,148 @@
+name: Release CordKey
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Universal Binary (arm64 + x86_64)
+        shell: bash
+        run: |
+          mkdir -p bin build/staging
+          SOURCES=(Sources/cordkey/*.swift)
+          FRAMEWORKS=(-framework IOKit -framework AppKit -framework ApplicationServices -framework CoreAudio -framework SwiftUI)
+
+          swiftc -O -whole-module-optimization -target arm64-apple-macosx13.0 \
+            "${SOURCES[@]}" "${FRAMEWORKS[@]}" -o bin/cordkey-arm64
+          swiftc -O -whole-module-optimization -target x86_64-apple-macosx13.0 \
+            "${SOURCES[@]}" "${FRAMEWORKS[@]}" -o bin/cordkey-x86_64
+
+          lipo -create -output bin/cordkey bin/cordkey-arm64 bin/cordkey-x86_64
+          lipo -info bin/cordkey
+          codesign -s - -f --identifier io.github.cordkey.cli bin/cordkey
+
+      - name: Package CordKey.app (Universal)
+        shell: bash
+        env:
+          APP_VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          APP="build/CordKey.app"
+          ICONSET="build/AppIcon.iconset"
+          rm -rf "$APP" "$ICONSET"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          cp bin/cordkey "$APP/Contents/MacOS/CordKey"
+          ./bin/cordkey --write-iconset "$ICONSET"
+          iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
+          rm -rf "$ICONSET"
+
+          cat > "$APP/Contents/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>CordKey</string>
+            <key>CFBundleDisplayName</key><string>CordKey</string>
+            <key>CFBundleIdentifier</key><string>io.github.cordkey.app</string>
+            <key>CFBundleVersion</key><string>${APP_VERSION}</string>
+            <key>CFBundleShortVersionString</key><string>${APP_VERSION}</string>
+            <key>CFBundleExecutable</key><string>CordKey</string>
+            <key>CFBundleIconFile</key><string>AppIcon</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>13.0</string>
+            <key>LSUIElement</key><true/>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict>
+          </plist>
+          EOF
+
+          codesign --deep -s - -f --identifier io.github.cordkey.app "$APP"
+          codesign -dvv "$APP"
+
+      - name: Create DMG, ZIP, and SHA256SUMS
+        shell: bash
+        env:
+          APP_VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          mkdir -p dist build/dmg-root
+          DMG="dist/CordKey-${APP_VERSION}-macos-universal.dmg"
+          ZIP="dist/CordKey-${APP_VERSION}-macos-universal.zip"
+
+          cp -R build/CordKey.app build/dmg-root/CordKey.app
+          ln -s /Applications build/dmg-root/Applications
+          hdiutil create -volname "CordKey ${APP_VERSION}" \
+            -srcfolder build/dmg-root \
+            -ov -format UDZO \
+            "$DMG"
+
+          ditto -c -k --sequesterRsrc --keepParent build/CordKey.app "$ZIP"
+
+          (cd dist && shasum -a 256 "CordKey-${APP_VERSION}-macos-universal.dmg" "CordKey-${APP_VERSION}-macos-universal.zip" > SHA256SUMS.txt)
+          ls -lh dist/
+          cat dist/SHA256SUMS.txt
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.ver.outputs.tag }}
+          APP_VERSION: ${{ steps.ver.outputs.version }}
+        shell: bash
+        run: |
+          cat > release-notes.md <<'EOF'
+          ## CordKey — macOS Universal Release (Apple Silicon & Intel)
+
+          Turn wired USB-C EarPods, universal USB/HID headsets (Consumer `0x0C` & Telephony `0x0B`), and Bluetooth headsets into Mac keyboard shortcuts — built for Push-to-Talk voice dictation and meetings.
+
+          ### Download & Install
+          1. Download **`CordKey-VERSION-macos-universal.dmg`** below.
+          2. Open the `.dmg` and drag **CordKey.app** into **Applications**.
+          3. Launch **CordKey** from Applications and grant **Accessibility** permission when prompted.
+
+          > **First-launch Gatekeeper note**: CordKey is currently ad-hoc signed (no paid Apple Developer ID certificate yet). If macOS says the app cannot be verified, either **Right-click → Open** in Applications, or run:
+          > ```bash
+          > xattr -cr /Applications/CordKey.app && open /Applications/CordKey.app
+          > ```
+
+          ### Highlights
+          - **Universal USB/HID Support**: Consumer (`0x0C`) + Telephony (`0x0B`) buttons + one-click **Learn Button**
+          - **EarPods Mic Shorting Fix**: 60 ms Clean-Audio **Click Toggle** + CoreAudio **Input Microphone Lock**
+          - **Multi-Action Hold Delay**: Independent Short Tap, Double Tap, and Hold actions on a single button
+          - **Per-Headset Auto-Profiles**: Remembers separate configs per `VID:PID` and auto-switches on plug-in
+          - **Floating Status HUD & Toggle Safety Timeout**: Click-to-release frosted-glass HUD + 1m/2m/5m auto-release
+          - **App-Aware Rules & Bluetooth Compatibility Mode**: Auto-pause in Music/IINA, override mute in Lark/Zoom/Discord, AirPods/Sony support via Click Toggle
+          - **Bilingual UI**: Native English & 简体中文 switching
+          EOF
+          sed -i '' "s/VERSION/${APP_VERSION}/g" release-notes.md
+
+          gh release create "$TAG" dist/* \
+            --title "CordKey ${TAG}" \
+            --notes-file release-notes.md \
+            --latest

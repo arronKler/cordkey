@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 extension Color {
@@ -135,5 +136,57 @@ struct ProminentCTAButtonStyle: ButtonStyle {
                     .fill(color.opacity(configuration.isPressed ? 0.82 : 1.0))
             )
             .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+    }
+}
+
+/// Zero-width, non-drawing NSScroller that guarantees macOS never renders a legacy
+/// scrollbar track inside SwiftUI ScrollViews even when "Show scroll bars: Always" is enabled.
+private final class ZeroWidthScroller: NSScroller {
+    override class var isCompatibleWithOverlayScrollers: Bool { true }
+    override class func scrollerWidth(for controlSize: NSControl.ControlSize, scrollerStyle: NSScroller.Style) -> CGFloat { 0 }
+    override func draw(_ dirtyRect: NSRect) {}
+}
+
+private final class ScrollBarHiderNSView: NSView {
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        hideEnclosingScrollBars()
+    }
+
+    override func layout() {
+        super.layout()
+        hideEnclosingScrollBars()
+    }
+
+    private func hideEnclosingScrollBars() {
+        var current: NSView? = superview
+        while let view = current {
+            if let sv = view as? NSScrollView {
+                sv.scrollerStyle = .overlay
+                sv.autohidesScrollers = true
+                sv.hasVerticalScroller = false
+                sv.hasHorizontalScroller = false
+                if !(sv.verticalScroller is ZeroWidthScroller) {
+                    sv.verticalScroller = ZeroWidthScroller()
+                }
+                if !(sv.horizontalScroller is ZeroWidthScroller) {
+                    sv.horizontalScroller = ZeroWidthScroller()
+                }
+                sv.verticalScroller?.isHidden = true
+                sv.horizontalScroller?.isHidden = true
+                break
+            }
+            current = view.superview
+        }
+    }
+}
+
+struct MacScrollBarHider: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        ScrollBarHiderNSView()
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        nsView.needsLayout = true
     }
 }

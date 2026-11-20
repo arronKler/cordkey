@@ -28,7 +28,21 @@ CordKey 是一个轻量、零外部依赖的原生 macOS 状态栏应用（`Cord
   - **分应用规则**：可在影音应用（Music、IINA、QuickTime）中自动暂停映射，或为飞书、Zoom、Discord 等会议软件单独覆写播放键。
   - **蓝牙耳机兼容模式**：无需抢占 USB HID，通过「单击切换」兼容 AirPods、Sony 等蓝牙耳机播放键。
 
-## 快速开始（状态栏应用，推荐）
+## 快速开始（推荐直接下载官方安装包）
+
+无需 Xcode 或本地编译，支持 **Apple Silicon (M1–M4) 与 Intel** 通用版本（macOS 13.0+）：
+
+1. 前往 [**GitHub Releases**](https://github.com/arronKler/cordkey/releases/latest) 下载最新的 **`CordKey-*-macos-universal.dmg`**。
+2. 双击打开 `.dmg`，将 **CordKey.app** 拖入 **Applications（应用程序）** 文件夹。
+3. 打开 **CordKey**，点击右上角状态栏线控胶囊图标，在提示横幅中点击 **「前往授权」** 并在 **系统设置 → 隐私与安全性 → 辅助功能** 勾选 **CordKey**。
+
+> **首次打开提示“无法验证开发者”？** 目前开源版本为本地/CI 免费签名（未购买付费 Apple Developer ID 证书）。在应用程序里对 `CordKey.app` **右键 → 打开**，或终端执行：
+> ```bash
+> xattr -cr /Applications/CordKey.app && open /Applications/CordKey.app
+> ```
+
+<details>
+<summary><strong>开发者源码构建（可选）</strong></summary>
 
 ```bash
 git clone https://github.com/arronKler/cordkey.git
@@ -37,10 +51,7 @@ make app-install   # 编译打包并安装到 /Applications/CordKey.app
 open /Applications/CordKey.app
 ```
 
-首次使用：
-1. 点击右上角状态栏的 CordKey 线控胶囊图标，在辅助功能提示横幅中点击 **「前往授权」**。
-2. 在 **系统设置 → 隐私与安全性 → 辅助功能** 中勾选 **CordKey**。
-3. 若提示输入监控权限，请在 **系统设置 → 隐私与安全性 → 输入监控** 中放行。
+</details>
 
 ## 命令行模式（可选）
 

@@ -10,16 +10,17 @@
 </p>
 
 <p align="center">
-  <a href="https://arronkler.github.io/cordkey/"><img src="https://img.shields.io/badge/Homepage-arronkler.github.io%2Fcordkey-F95722?style=flat-square" alt="Homepage" /></a>
-  <img src="https://img.shields.io/badge/macOS-13.0%2B-111318?style=flat-square&logo=apple&logoColor=white" alt="macOS 13+" />
+  <a href="https://github.com/arronKler/cordkey/releases/latest"><img src="https://img.shields.io/github/v/release/arronKler/cordkey?label=Download&color=F95722&style=flat-square" alt="Latest Release" /></a>
+  <a href="https://arronkler.github.io/cordkey/"><img src="https://img.shields.io/badge/Homepage-arronkler.github.io%2Fcordkey-161A24?style=flat-square" alt="Homepage" /></a>
+  <img src="https://img.shields.io/badge/macOS-13.0%2B%20Universal-111318?style=flat-square&logo=apple&logoColor=white" alt="macOS 13+ Universal" />
   <img src="https://img.shields.io/badge/Swift-Zero%20Dependencies-F05138?style=flat-square&logo=swift&logoColor=white" alt="Zero Dependencies Swift" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2563EB?style=flat-square" alt="MIT License" /></a>
 </p>
 
 <p align="center">
+  <a href="https://github.com/arronKler/cordkey/releases/latest"><strong>Download DMG</strong></a> ·
   <a href="https://arronkler.github.io/cordkey/">Website</a> ·
   <a href="#features">Features</a> ·
-  <a href="#quick-start">Quick Start</a> ·
   <a href="#cli-reference">CLI</a> ·
   <a href="#hardware-compatibility">Compatibility</a> ·
   <a href="README.zh-CN.md">简体中文</a>
@@ -81,12 +82,29 @@ Pure Swift using only Apple system frameworks: `IOKit`, `CoreGraphics`, `CoreAud
 
 ## Quick Start
 
-### Requirements
+### Option 1 — Download Official Release (Recommended)
 
-- **macOS 13.0 (Ventura)** or later
-- **Xcode Command Line Tools** (`xcode-select --install`)
+No Xcode or compilation required. Universal binary for **Apple Silicon (M1–M4) & Intel** on **macOS 13.0+**:
 
-### Build & Install Menu Bar App
+1. Download **`CordKey-*-macos-universal.dmg`** from [**GitHub Releases**](https://github.com/arronKler/cordkey/releases/latest).
+2. Open the `.dmg` and drag **CordKey.app** into **Applications**.
+3. Launch **CordKey** from Applications.
+
+> **First-launch Gatekeeper note**: CordKey is currently ad-hoc signed (no paid Apple Developer ID certificate yet). If macOS warns that the developer cannot be verified, **Right-click → Open** on `CordKey.app`, or run:
+> ```bash
+> xattr -cr /Applications/CordKey.app && open /Applications/CordKey.app
+> ```
+
+### Grant macOS Permissions (One-Time Setup)
+
+1. Click the **CordKey** inline-remote capsule icon in the top-right menu bar.
+2. Click **Open Settings** in the Accessibility banner and enable **CordKey** under **System Settings → Privacy & Security → Accessibility**.
+3. If macOS prompts for **Input Monitoring** (or the Input Monitoring banner appears), allow **CordKey** under **System Settings → Privacy & Security → Input Monitoring**.
+
+<details>
+<summary><strong>Option 2 — Build from Source (Developers)</strong></summary>
+
+Requires Xcode Command Line Tools (`xcode-select --install`):
 
 ```bash
 git clone https://github.com/arronKler/cordkey.git
@@ -95,13 +113,9 @@ make app-install   # compiles, packages AppIcon.icns, installs /Applications/Cor
 open /Applications/CordKey.app
 ```
 
-### Grant macOS Permissions (One-Time Setup)
+> After rebuilding from source, macOS TCC binds Accessibility to the binary hash — if permission appears stuck after an update, remove `CordKey` (`−`) in Accessibility and re-add (`+`) `/Applications/CordKey.app`.
 
-1. Click the **CordKey** inline-remote capsule icon in the top-right menu bar.
-2. Click **Open Settings** in the Accessibility banner and enable **CordKey** under **System Settings → Privacy & Security → Accessibility**.
-3. If macOS prompts for **Input Monitoring** (or the Input Monitoring banner appears), allow **CordKey** under **System Settings → Privacy & Security → Input Monitoring**.
-
-> **Rebuilding from source?** Because local builds use ad-hoc signing (`codesign -s -`), macOS TCC binds Accessibility to the exact binary hash. After rebuilding and reinstalling, if macOS still reports missing permission, remove `CordKey` (`−`) in the Accessibility list and re-add (`+`) `/Applications/CordKey.app`.
+</details>
 
 ---
 

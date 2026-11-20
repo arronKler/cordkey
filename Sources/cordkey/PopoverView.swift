@@ -28,6 +28,7 @@ struct PopoverView: View {
                 middleContent
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.vertical, 1)
+                    .background(MacScrollBarHider())
                     .background(
                         GeometryReader { geo in
                             Color.clear.preference(key: MiddleHeightKey.self, value: geo.size.height)

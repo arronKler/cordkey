@@ -4,49 +4,53 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>CordKey — Turn Headset Buttons into Mac Keyboard Shortcuts</title>
-<meta name="description" content="Zero-dependency macOS menu bar app and CLI that remaps USB-C EarPods, universal USB/HID headsets (Consumer & Telephony), and Bluetooth headsets to Mac keyboard shortcuts. Built for Push-to-Talk voice dictation." />
+<meta name="description" content="Native macOS menu bar app that turns USB-C EarPods, universal USB/HID headsets (Jabra, Poly, Logitech), and Bluetooth headsets into Mac keyboard shortcuts for Push-to-Talk voice dictation." />
 <meta property="og:title" content="CordKey — Your Headset Button, Now a Mac Key" />
-<meta property="og:description" content="Native macOS menu bar utility & CLI for remapping USB-C EarPods and universal USB/HID headset buttons to keyboard shortcuts." />
+<meta property="og:description" content="Download the universal macOS app. Remap EarPods, USB office headsets, and Bluetooth headsets to Right Option, Fn, F13, or any shortcut." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://arronkler.github.io/cordkey/" />
 <meta property="og:image" content="https://arronkler.github.io/cordkey/assets/icon.png" />
 <link rel="icon" type="image/png" href="assets/favicon.png" />
 <style>
   :root {
-    --bg: #0a0c11;
-    --bg-elev: #12151e;
-    --bg-card: #161a24;
-    --bg-card-hover: #1c212e;
-    --border: rgba(255, 255, 255, 0.085);
-    --border-strong: rgba(255, 255, 255, 0.16);
-    --text: #f4f6fa;
-    --text-muted: #98a2b8;
-    --text-dim: #667085;
+    --bg: #090a0d;
+    --bg-panel: #101217;
+    --bg-inset: #151820;
+    --bg-stage: #0d0f14;
+    --line: rgba(255, 255, 255, 0.085);
+    --line-strong: rgba(255, 255, 255, 0.16);
+    --text: #f3f4f6;
+    --text-2: #a0a7b8;
+    --text-3: #687082;
     --orange: #f95722;
-    --orange-bright: #ff7340;
-    --orange-soft: rgba(249, 87, 34, 0.14);
-    --orange-glow: rgba(249, 87, 34, 0.32);
+    --orange-hi: #ff703d;
+    --orange-tint: rgba(249, 87, 34, 0.13);
     --green: #22c55e;
-    --code-bg: #0d1017;
-    --shadow-lg: 0 28px 64px rgba(0, 0, 0, 0.55);
+    --blue: #3b82f6;
+    --grid-dot: rgba(255, 255, 255, 0.045);
+    --popover-bg: rgba(26, 29, 37, 0.92);
+    --popover-card: rgba(255, 255, 255, 0.045);
+    --stage-wallpaper: radial-gradient(90% 80% at 25% 15%, #1f2433 0%, #11141d 55%, #090b10 100%);
+    --mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
   }
 
   body.light {
-    --bg: #f6f7fb;
-    --bg-elev: #ffffff;
-    --bg-card: #ffffff;
-    --bg-card-hover: #f9fafc;
-    --border: rgba(15, 23, 42, 0.085);
-    --border-strong: rgba(15, 23, 42, 0.16);
-    --text: #101828;
-    --text-muted: #475467;
-    --text-dim: #667085;
-    --orange: #e84b17;
-    --orange-bright: #f95722;
-    --orange-soft: rgba(249, 87, 34, 0.10);
-    --orange-glow: rgba(249, 87, 34, 0.22);
-    --code-bg: #10141d;
-    --shadow-lg: 0 22px 48px rgba(15, 23, 42, 0.12);
+    --bg: #f3f2ee;
+    --bg-panel: #ffffff;
+    --bg-inset: #ecebe6;
+    --bg-stage: #e5e4de;
+    --line: rgba(16, 19, 26, 0.09);
+    --line-strong: rgba(16, 19, 26, 0.18);
+    --text: #12141a;
+    --text-2: #4b5262;
+    --text-3: #767d8e;
+    --orange: #e64916;
+    --orange-hi: #f95722;
+    --orange-tint: rgba(249, 87, 34, 0.09);
+    --grid-dot: rgba(16, 19, 26, 0.06);
+    --popover-bg: rgba(255, 255, 255, 0.94);
+    --popover-card: rgba(16, 19, 26, 0.035);
+    --stage-wallpaper: radial-gradient(90% 80% at 25% 15%, #e5e7ef 0%, #d9dce6 55%, #cfd3df 100%);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -56,7 +60,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
     background: var(--bg);
     color: var(--text);
-    line-height: 1.6;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     transition: background 0.25s ease, color 0.25s ease;
     overflow-x: hidden;
@@ -64,42 +68,37 @@
 
   a { color: inherit; text-decoration: none; }
 
-  /* Subtle top ambient glow */
-  .ambient-bg {
+  /* Subtle precision dot grid backdrop */
+  .grid-backdrop {
     position: fixed;
     inset: 0;
-    pointer-events: none;
     z-index: -1;
-    background:
-      radial-gradient(60% 42% at 50% -8%, rgba(249, 87, 34, 0.13) 0%, transparent 72%),
-      radial-gradient(35% 30% at 85% 18%, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
-  }
-  body.light .ambient-bg {
-    background:
-      radial-gradient(60% 42% at 50% -8%, rgba(249, 87, 34, 0.10) 0%, transparent 72%),
-      radial-gradient(35% 30% at 85% 18%, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+    background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+    background-size: 24px 24px;
+    mask-image: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.25) 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.25) 60%, transparent 100%);
   }
 
   .wrap {
-    max-width: 1120px;
+    max-width: 1080px;
     margin: 0 auto;
     padding: 0 24px;
   }
 
-  /* Nav */
+  /* Navigation */
   nav {
     position: sticky;
     top: 0;
-    z-index: 40;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    background: rgba(10, 12, 17, 0.72);
-    border-bottom: 1px solid var(--border);
+    z-index: 50;
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    border-bottom: 1px solid var(--line);
   }
-  body.light nav { background: rgba(246, 247, 251, 0.78); }
 
   .nav-inner {
-    height: 62px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -110,311 +109,318 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
+    font-size: 15px;
     font-weight: 700;
-    font-size: 16px;
     letter-spacing: -0.02em;
   }
 
   .brand img {
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
+    width: 26px;
+    height: 26px;
+    border-radius: 6.5px;
+  }
+
+  .brand-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    border: 1px solid var(--line-strong);
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-weight: 500;
   }
 
   .nav-links {
     display: flex;
-    align-items: center;
-    gap: 22px;
-    font-size: 13.5px;
-    color: var(--text-muted);
+    gap: 24px;
+    font-size: 13px;
     font-weight: 500;
+    color: var(--text-2);
   }
-
   .nav-links a:hover { color: var(--text); }
 
-  .nav-actions {
+  .nav-right {
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
-  .chip-btn {
+  .nav-pill {
     appearance: none;
-    border: 1px solid var(--border-strong);
-    background: var(--bg-card);
-    color: var(--text);
-    height: 32px;
+    height: 30px;
     padding: 0 11px;
-    border-radius: 999px;
+    border-radius: 8px;
+    border: 1px solid var(--line-strong);
+    background: var(--bg-panel);
+    color: var(--text-2);
     font-size: 12px;
     font-weight: 550;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    transition: all 0.16s ease;
+    transition: all 0.14s ease;
   }
+  .nav-pill:hover { color: var(--text); border-color: var(--orange); }
 
-  .chip-btn:hover { border-color: var(--orange); }
-
-  .chip-btn.cta {
+  .nav-pill.dl {
     background: var(--orange);
     border-color: var(--orange);
     color: #fff;
   }
-  .chip-btn.cta:hover { background: var(--orange-bright); }
+  .nav-pill.dl:hover { background: var(--orange-hi); }
 
-  /* Hero */
+  /* Editorial Hero */
   .hero {
-    padding: 68px 0 56px;
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 48px;
-    align-items: center;
+    padding: 72px 0 40px;
+    text-align: center;
   }
 
-  .hero-badge {
+  .hero-kicker {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 5px 12px 5px 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    background: var(--bg-panel);
+    border: 1px solid var(--line-strong);
+    padding: 5px 12px;
     border-radius: 999px;
-    background: var(--orange-soft);
-    border: 1px solid rgba(249, 87, 34, 0.32);
-    color: var(--orange-bright);
-    font-size: 12px;
-    font-weight: 600;
-    margin-bottom: 18px;
+    margin-bottom: 24px;
   }
 
-  body.light .hero-badge { color: var(--orange); }
-
-  .badge-dot {
-    width: 7px;
-    height: 7px;
+  .kicker-dot {
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--orange);
-    box-shadow: 0 0 10px var(--orange);
+    box-shadow: 0 0 8px var(--orange);
   }
 
-  h1 {
-    font-size: clamp(36px, 4.8vw, 54px);
-    font-weight: 750;
-    line-height: 1.08;
-    letter-spacing: -0.035em;
-    margin-bottom: 18px;
+  .hero h1 {
+    font-size: clamp(40px, 6vw, 66px);
+    font-weight: 740;
+    letter-spacing: -0.042em;
+    line-height: 1.04;
+    max-width: 820px;
+    margin: 0 auto 20px;
   }
 
-  h1 .accent { color: var(--orange); }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--orange);
+  }
 
   .hero-sub {
-    font-size: 16.5px;
-    color: var(--text-muted);
-    max-width: 520px;
-    margin-bottom: 28px;
-    line-height: 1.65;
+    font-size: clamp(15.5px, 1.8vw, 18px);
+    color: var(--text-2);
+    max-width: 620px;
+    margin: 0 auto 32px;
+    line-height: 1.62;
+    font-weight: 420;
   }
 
-  .hero-ctas {
+  .hero-actions {
     display: flex;
+    align-items: center;
+    justify-content: center;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 22px;
+    margin-bottom: 16px;
   }
 
-  .btn {
-    appearance: none;
-    border: 1px solid var(--border-strong);
-    background: var(--bg-card);
-    color: var(--text);
-    padding: 12px 20px;
+  .btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 48px;
+    padding: 0 24px;
     border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
+    background: linear-gradient(180deg, #ff6c36 0%, #f95722 55%, #de410f 100%);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    border: 1px solid rgba(255, 190, 160, 0.35);
+    box-shadow: 0 12px 32px rgba(249, 87, 34, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+
+  .btn-download:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+    box-shadow: 0 16px 38px rgba(249, 87, 34, 0.44);
+  }
+
+  .btn-ghost {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    transition: all 0.16s ease;
+    height: 48px;
+    padding: 0 20px;
+    border-radius: 12px;
+    background: var(--bg-panel);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid var(--line-strong);
+    transition: all 0.15s ease;
+  }
+  .btn-ghost:hover { border-color: var(--orange); transform: translateY(-1px); }
+
+  .hero-specs {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 18px;
   }
 
-  .btn:hover { transform: translateY(-1px); border-color: var(--orange); }
-
-  .btn.primary {
-    background: linear-gradient(180deg, #ff6c36 0%, #f95722 60%, #e04412 100%);
-    border-color: rgba(255, 165, 130, 0.35);
-    color: #fff;
-    box-shadow: 0 10px 26px var(--orange-glow);
+  /* Interactive Desktop + Hardware Stage */
+  .stage-shell {
+    margin-top: 44px;
+    border-radius: 22px;
+    border: 1px solid var(--line-strong);
+    background: var(--stage-wallpaper);
+    overflow: hidden;
+    box-shadow: 0 36px 80px rgba(0, 0, 0, 0.48);
+    text-align: left;
   }
+  body.light .stage-shell { box-shadow: 0 28px 60px rgba(16, 19, 26, 0.14); }
 
-  .btn.primary:hover { filter: brightness(1.06); }
-
-  .install-strip {
+  .mac-bar {
+    height: 30px;
+    padding: 0 16px;
+    background: rgba(12, 14, 20, 0.72);
+    color: #f3f4f6;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    background: var(--code-bg);
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 11px 14px;
-    max-width: 520px;
-    font-family: ui-monospace, "SF Mono", Menlo, Monaco, monospace;
-    font-size: 12.5px;
-  }
-
-  .install-strip code {
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  .copy-mini {
-    appearance: none;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.08);
-    color: #f8fafc;
-    padding: 4px 10px;
-    border-radius: 7px;
-    font-size: 11.5px;
-    font-weight: 600;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  .copy-mini:hover { background: var(--orange); border-color: var(--orange); }
-
-  .meta-line {
-    margin-top: 14px;
     font-size: 12px;
-    color: var(--text-dim);
+  }
+  body.light .mac-bar {
+    background: rgba(255, 255, 255, 0.72);
+    color: #12141a;
+    border-bottom: 1px solid rgba(16, 19, 26, 0.08);
+  }
+
+  .mac-bar-left, .mac-bar-right {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     gap: 14px;
   }
 
-  /* Interactive Tactile Inline Remote Demo Stage */
-  .demo-stage {
-    background: var(--bg-card);
-    border: 1px solid var(--border-strong);
-    border-radius: 24px;
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    position: relative;
-  }
-
-  .demo-menubar {
-    height: 32px;
-    padding: 0 14px;
-    background: rgba(15, 18, 25, 0.9);
-    color: #f8fafc;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 11.5px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .demo-mb-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .demo-mb-pill {
+  .mb-status {
     display: inline-flex;
     align-items: center;
     gap: 5px;
     padding: 2px 7px;
-    border-radius: 6px;
-    transition: all 0.15s ease;
-    font-variant-numeric: tabular-nums;
+    border-radius: 5px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.14s ease;
   }
 
-  .demo-mb-pill.active {
-    background: rgba(249, 87, 34, 0.24);
-    color: #ffb49a;
+  .mb-status.active {
+    background: rgba(249, 87, 34, 0.22);
+    color: var(--orange-hi);
   }
+  body.light .mb-status.active { color: var(--orange); }
 
-  .demo-body {
-    padding: 22px 22px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
+  .stage-canvas {
+    padding: 28px 32px 32px;
     position: relative;
   }
 
-  /* Simulated Floating HUD inside demo */
-  .demo-hud {
+  /* Live Floating HUD inside desktop stage */
+  .stage-hud-slot {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .live-hud {
     display: inline-flex;
     align-items: center;
-    gap: 9px;
-    padding: 7px 13px;
+    gap: 10px;
+    padding: 7px 14px;
     border-radius: 999px;
-    background: rgba(18, 22, 31, 0.92);
-    color: #fff;
+    background: rgba(15, 17, 23, 0.92);
+    color: #f8fafc;
     border: 1px solid rgba(255, 255, 255, 0.16);
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.42);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42);
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     opacity: 0;
-    transform: translateY(-6px) scale(0.96);
+    transform: translateY(-8px) scale(0.96);
     transition: all 0.18s cubic-bezier(0.22, 1, 0.36, 1);
     pointer-events: none;
   }
-
-  .demo-hud.visible {
+  .live-hud.visible {
     opacity: 1;
     transform: translateY(0) scale(1);
     pointer-events: auto;
   }
 
-  .hud-pulse {
+  .hud-led {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: var(--orange);
     box-shadow: 0 0 0 0 rgba(249, 87, 34, 0.7);
-    animation: pulse 1.3s infinite;
+    animation: ledPulse 1.3s infinite;
   }
-
-  @keyframes pulse {
+  @keyframes ledPulse {
     0% { box-shadow: 0 0 0 0 rgba(249, 87, 34, 0.7); }
     70% { box-shadow: 0 0 0 7px rgba(249, 87, 34, 0); }
     100% { box-shadow: 0 0 0 0 rgba(249, 87, 34, 0); }
   }
 
-  .demo-mode-tabs {
-    display: inline-flex;
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    padding: 3px;
-    border-radius: 10px;
-    gap: 3px;
+  .stage-split {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 28px;
+    align-items: center;
   }
 
-  .demo-mode-btn {
-    appearance: none;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    padding: 5px 12px;
-    border-radius: 7px;
-    font-size: 11.5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.14s ease;
+  /* Left: Physical Inline Remote Hardware Bay */
+  .hw-bay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 22px 20px;
+    border-radius: 18px;
+    background: rgba(9, 10, 14, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+  body.light .hw-bay {
+    background: rgba(255, 255, 255, 0.56);
+    border-color: rgba(16, 19, 26, 0.09);
   }
 
-  .demo-mode-btn.active {
-    background: var(--orange);
-    color: #fff;
+  .hw-caption {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-3);
   }
 
-  /* Interactive Hardware Capsule */
-  .remote-wrap {
-    position: relative;
+  .remote-unit {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -422,201 +428,394 @@
     -webkit-user-select: none;
   }
 
-  .cord-line {
+  .wire-seg {
     width: 8px;
-    height: 22px;
-    background: linear-gradient(90deg, #4b5563, #7c879b 40%, #374151);
+    height: 20px;
+    background: linear-gradient(90deg, #3c4250, #7c869a 38%, #2e3340);
   }
 
-  .remote-capsule {
-    width: 118px;
-    padding: 16px 14px;
-    border-radius: 58px;
-    background: linear-gradient(145deg, #f5f7fa 0%, #d8dde6 58%, #aeb6c4 100%);
-    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.45), inset 0 2px 3px rgba(255, 255, 255, 0.85);
+  .capsule-body {
+    width: 112px;
+    padding: 12px;
+    border-radius: 56px;
+    background: linear-gradient(155deg, #f8fafc 0%, #dbe0ea 55%, #b1b9c8 100%);
+    box-shadow: 0 22px 38px rgba(0, 0, 0, 0.5), inset 0 2px 3px rgba(255, 255, 255, 0.9);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
   }
 
-  .remote-glyph {
-    color: #5b6475;
-    font-size: 18px;
-    font-weight: 700;
-    line-height: 1;
-    height: 18px;
-    display: flex;
-    align-items: center;
-  }
-
-  .remote-btn {
+  .vol-btn {
     appearance: none;
-    width: 82px;
-    height: 82px;
-    border-radius: 26px;
-    border: 2px solid rgba(255, 195, 168, 0.65);
-    background: linear-gradient(155deg, #ff7a45 0%, #f95722 55%, #d6370b 100%);
-    box-shadow: 0 8px 18px rgba(168, 36, 0, 0.44), inset 0 2px 3px rgba(255, 255, 255, 0.35);
+    border: none;
+    background: transparent;
+    color: #5b6475;
+    width: 48px;
+    height: 26px;
+    border-radius: 13px;
+    font-size: 17px;
+    font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.1s ease;
+    transition: background 0.1s ease, color 0.1s ease;
+  }
+  .vol-btn:hover { background: rgba(15, 23, 42, 0.08); color: #1e293b; }
+  .vol-btn:active { transform: scale(0.92); }
+
+  .center-key {
+    appearance: none;
+    width: 78px;
+    height: 78px;
+    border-radius: 24px;
+    border: 2px solid rgba(255, 198, 172, 0.65);
+    background: linear-gradient(155deg, #ff7a45 0%, #f95722 52%, #d4370b 100%);
+    box-shadow: 0 8px 18px rgba(168, 36, 0, 0.45), inset 0 2px 3px rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.07s ease, box-shadow 0.07s ease;
     touch-action: manipulation;
   }
-
-  .remote-btn:hover { filter: brightness(1.05); }
-
-  .remote-btn.pressed {
+  .center-key:hover { filter: brightness(1.06); }
+  .center-key.pressed {
     transform: scale(0.93) translateY(2px);
-    box-shadow: 0 2px 6px rgba(168, 36, 0, 0.5), 0 0 24px rgba(249, 87, 34, 0.65);
+    box-shadow: 0 2px 6px rgba(168, 36, 0, 0.5), 0 0 26px rgba(249, 87, 34, 0.72);
   }
 
-  .remote-ridge {
-    width: 30px;
-    height: 10px;
+  .key-ridge {
+    width: 28px;
+    height: 9px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.94);
+    background: rgba(255, 255, 255, 0.95);
   }
 
-  .demo-hint {
+  .hw-hint {
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--text-2);
     text-align: center;
+    max-width: 260px;
   }
 
-  .demo-log {
+  /* Right: Authentic Miniature CordKey Popover */
+  .sim-popover {
+    background: var(--popover-bg);
+    border: 1px solid var(--line-strong);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 370px;
     width: 100%;
-    background: var(--code-bg);
-    color: #cbd5e1;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    padding: 9px 12px;
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    font-size: 11px;
+    margin: 0 auto;
+  }
+
+  .pop-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
   }
 
-  .demo-log .tag { color: var(--orange-bright); font-weight: 600; }
+  .pop-head-left {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .pop-head-left img {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+  }
+
+  .pop-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--green);
+    background: rgba(34, 197, 94, 0.14);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+
+  .pop-card {
+    background: var(--popover-card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .pop-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 4px 6px;
+    border-radius: 7px;
+    transition: background 0.12s ease;
+  }
+  .pop-row.lit {
+    background: var(--orange-tint);
+  }
+  .pop-key-val {
+    color: var(--orange-hi);
+    font-weight: 600;
+    font-size: 11.5px;
+  }
+  body.light .pop-key-val { color: var(--orange); }
+
+  .pop-seg {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    padding: 2px;
+    border-radius: 8px;
+    background: rgba(128, 128, 128, 0.14);
+  }
+
+  .pop-seg button {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--text-2);
+    font-size: 11px;
+    font-weight: 550;
+    padding: 5px 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.14s ease;
+  }
+  .pop-seg button.active {
+    background: var(--orange);
+    color: #fff;
+    font-weight: 650;
+  }
+
+  .tactile-sw {
+    width: 32px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--orange);
+    padding: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+  }
+  .tactile-sw.off {
+    background: rgba(128, 128, 128, 0.28);
+    justify-content: flex-start;
+  }
+  .tactile-sw span {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  .pop-foot {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding-top: 2px;
+  }
+
+  .pop-foot-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-3);
+    flex-shrink: 0;
+  }
+  .pop-foot-dot.active { background: var(--orange); }
 
   /* Sections */
-  section { padding: 56px 0; }
+  section {
+    padding: 76px 0;
+    border-top: 1px solid var(--line);
+  }
 
-  .sec-eyebrow {
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
+  .sec-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 36px;
+  }
+
+  .sec-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--orange);
     margin-bottom: 8px;
   }
 
   .sec-title {
-    font-size: clamp(26px, 3vw, 34px);
+    font-size: clamp(26px, 3.2vw, 36px);
     font-weight: 720;
-    letter-spacing: -0.025em;
-    margin-bottom: 10px;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
   }
 
-  .sec-desc {
-    font-size: 15px;
-    color: var(--text-muted);
-    max-width: 640px;
-    margin-bottom: 30px;
+  .sec-sub {
+    font-size: 14.5px;
+    color: var(--text-2);
+    max-width: 460px;
   }
 
-  /* Bento Feature Grid */
-  .bento {
+  /* Section 01: Hardware Circuit & 60ms Schematic */
+  .schematic-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 18px;
   }
 
-  .bento-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+  .schem-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
     border-radius: 18px;
-    padding: 22px;
-    transition: border-color 0.2s ease, transform 0.2s ease;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .bento-card:hover {
-    border-color: var(--border-strong);
-    transform: translateY(-2px);
+  .schem-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
 
-  .bento-card.wide { grid-column: span 2; }
+  .schem-label .pill-red {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.12);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
 
-  .icon-box {
-    width: 38px;
-    height: 38px;
-    border-radius: 11px;
-    background: var(--orange-soft);
+  .schem-label .pill-ok {
+    color: var(--green);
+    background: rgba(34, 197, 94, 0.12);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .schem-svg-box {
+    background: var(--bg-inset);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .schem-card h3 {
+    font-size: 16px;
+    font-weight: 660;
+    letter-spacing: -0.015em;
+  }
+
+  .schem-card p {
+    font-size: 13.5px;
+    color: var(--text-2);
+    line-height: 1.62;
+  }
+
+  /* Section 02: Precision Feature Matrix (Hairline Industrial Grid) */
+  .spec-matrix {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--line);
+    gap: 1px;
+  }
+
+  .spec-cell {
+    background: var(--bg-panel);
+    padding: 26px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: background 0.16s ease;
+  }
+  .spec-cell:hover { background: var(--bg-inset); }
+
+  .spec-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .spec-idx {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+  }
+
+  .spec-ico {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--line-strong);
+    background: var(--bg-inset);
     color: var(--orange);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    margin-bottom: 14px;
   }
 
-  .bento-card h3 {
-    font-size: 16px;
-    font-weight: 650;
-    margin-bottom: 7px;
-    letter-spacing: -0.01em;
+  .spec-cell h3 {
+    font-size: 15.5px;
+    font-weight: 660;
+    letter-spacing: -0.015em;
   }
 
-  .bento-card p {
-    font-size: 13.5px;
-    color: var(--text-muted);
+  .spec-cell p {
+    font-size: 13px;
+    color: var(--text-2);
     line-height: 1.62;
+    flex: 1;
   }
 
-  /* EarPods Physics Callout */
-  .physics-box {
-    background: linear-gradient(135deg, rgba(249, 87, 34, 0.10) 0%, var(--bg-card) 58%);
-    border: 1px solid rgba(249, 87, 34, 0.28);
-    border-radius: 22px;
-    padding: 30px 32px;
-    display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 28px;
-    align-items: center;
+  .spec-code {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
   }
 
-  .physics-solutions {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .sol-pill {
-    background: var(--bg-elev);
-    border: 1px solid var(--border-strong);
-    border-radius: 14px;
-    padding: 14px 16px;
-  }
-
-  .sol-pill strong {
-    display: block;
-    font-size: 13.5px;
-    margin-bottom: 3px;
-  }
-
-  .sol-pill span {
-    font-size: 12.5px;
-    color: var(--text-muted);
-  }
-
-  /* Compatibility Table */
-  .table-wrap {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+  /* Section 03: Compatibility Spec Table */
+  .compat-box {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
     border-radius: 18px;
     overflow: hidden;
   }
@@ -628,140 +827,208 @@
   }
 
   th, td {
-    padding: 14px 18px;
+    padding: 15px 20px;
     text-align: left;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--line);
   }
 
   th {
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--text-muted);
-    background: var(--bg-elev);
+    color: var(--text-3);
+    background: var(--bg-inset);
   }
-
   tr:last-child td { border-bottom: none; }
 
-  .ok { color: var(--green); font-weight: 700; }
-  .tag-pill {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
+  .mono-id {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text-3);
+  }
+
+  .dot-yes {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 12.5px;
+  }
+  .dot-yes::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+
+  /* Section 04: Official Release Download & Install */
+  .install-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--line-strong);
+    border-radius: 20px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .install-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .steps-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  .step-box {
+    background: var(--bg-inset);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .step-box .sn {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--orange);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .step-box strong {
+    display: block;
+    font-size: 13.5px;
+    margin-bottom: 4px;
+  }
+
+  .step-box span {
+    font-size: 12.5px;
+    color: var(--text-2);
+  }
+
+  .gatekeeper-note {
+    background: var(--orange-tint);
+    border: 1px solid rgba(249, 87, 34, 0.25);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+  }
+
+  .cmd-inline {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.32);
+    color: #f8fafc;
+    padding: 6px 10px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  body.light .cmd-inline { background: #141720; }
+
+  .copy-btn {
+    appearance: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 5px;
     font-size: 11px;
     font-weight: 600;
-    background: var(--orange-soft);
-    color: var(--orange-bright);
+    cursor: pointer;
   }
-  body.light .tag-pill { color: var(--orange); }
+  .copy-btn:hover { background: var(--orange); border-color: var(--orange); }
 
-  /* CLI Terminal Block */
-  .terminal {
-    background: #0d1017;
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.11);
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
+  details.dev-box {
+    background: var(--bg-inset);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
   }
 
-  .term-head {
-    padding: 11px 16px;
-    background: #141925;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  details.dev-box summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    list-style: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
 
-  .dots { display: flex; gap: 7px; }
-  .dots span { width: 11px; height: 11px; border-radius: 50%; }
-  .dots span:nth-child(1) { background: #ff5f56; }
-  .dots span:nth-child(2) { background: #ffbd2e; }
-  .dots span:nth-child(3) { background: #27c93f; }
-
-  .term-body {
-    padding: 20px 22px;
-    font-family: ui-monospace, "SF Mono", Menlo, Monaco, monospace;
-    font-size: 12.8px;
-    line-height: 1.78;
+  details.dev-box pre {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: #0b0d13;
+    color: #d8dee9;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.72;
     overflow-x: auto;
   }
 
-  .term-body .c { color: #64748b; }
-  .term-body .p { color: #f95722; }
-  .term-body .k { color: #7dd3fc; }
-
-  /* Trust / Privacy strip */
-  .trust-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-  }
-
-  .trust-item {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 18px;
-  }
-
-  .trust-item strong { display: block; font-size: 14px; margin-bottom: 4px; }
-  .trust-item span { font-size: 12.5px; color: var(--text-muted); }
-
   /* Footer */
   footer {
-    margin-top: 36px;
+    border-top: 1px solid var(--line);
     padding: 32px 0 48px;
-    border-top: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 16px;
-    font-size: 13px;
-    color: var(--text-muted);
+    font-size: 12.5px;
+    color: var(--text-3);
   }
 
-  .footer-links { display: flex; gap: 18px; }
-  .footer-links a:hover { color: var(--orange); }
+  .foot-links { display: flex; gap: 20px; }
+  .foot-links a:hover { color: var(--orange); }
 
   @media (max-width: 900px) {
-    .hero { grid-template-columns: 1fr; padding-top: 40px; }
-    .bento { grid-template-columns: 1fr; }
-    .bento-card.wide { grid-column: span 1; }
-    .physics-box { grid-template-columns: 1fr; }
-    .trust-grid { grid-template-columns: repeat(2, 1fr); }
+    .stage-split, .schematic-grid, .spec-matrix, .steps-3 { grid-template-columns: 1fr; }
     .nav-links { display: none; }
-  }
-
-  @media (max-width: 520px) {
-    .trust-grid { grid-template-columns: 1fr; }
-    th, td { padding: 10px 12px; font-size: 12.5px; }
+    .stage-canvas { padding: 20px 16px 24px; }
   }
 </style>
 </head>
 <body>
-<div class="ambient-bg"></div>
+<div class="grid-backdrop"></div>
 
 <nav>
   <div class="wrap nav-inner">
     <a class="brand" href="#">
-      <img src="assets/icon.png" alt="CordKey Icon" />
+      <img src="assets/icon.png" alt="CordKey" />
       <span>CordKey</span>
+      <span class="brand-tag">v1.0.0</span>
     </a>
     <div class="nav-links">
-      <a href="#features" data-en="Features" data-zh="核心特性">Features</a>
-      <a href="#earpods" data-en="EarPods Audio" data-zh="EarPods 专优">EarPods Audio</a>
-      <a href="#compatibility" data-en="Headsets" data-zh="兼容耳机">Headsets</a>
-      <a href="#cli" data-en="CLI" data-zh="命令行">CLI</a>
+      <a href="#engineering" data-en="Hardware" data-zh="硬件原理">Hardware</a>
+      <a href="#specs" data-en="Features" data-zh="功能特性">Features</a>
+      <a href="#compatibility" data-en="Headsets" data-zh="兼容矩阵">Headsets</a>
+      <a href="#download" data-en="Install" data-zh="安装指南">Install</a>
     </div>
-    <div class="nav-actions">
-      <button class="chip-btn" id="langBtn" type="button">中文</button>
-      <button class="chip-btn" id="themeBtn" type="button" aria-label="Toggle theme">☀️</button>
-      <a class="chip-btn cta" href="https://github.com/arronKler/cordkey" target="_blank" rel="noopener">
-        GitHub ↗
+    <div class="nav-right">
+      <button class="nav-pill" id="langBtn" type="button">中文</button>
+      <button class="nav-pill" id="themeBtn" type="button" aria-label="Toggle theme">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"/></svg>
+      </button>
+      <a class="nav-pill dl" href="https://github.com/arronKler/cordkey/releases/latest">
+        <span data-en="Download" data-zh="下载">Download</span>
       </a>
     </div>
   </div>
@@ -769,312 +1036,462 @@
 
 <main class="wrap">
   <!-- HERO -->
-  <section class="hero">
-    <div>
-      <div class="hero-badge">
-        <span class="badge-dot"></span>
-        <span data-en="Native macOS 13+ · Zero Dependencies · Open Source" data-zh="原生 macOS 13+ · 零第三方依赖 · MIT 开源">Native macOS 13+ · Zero Dependencies · Open Source</span>
-      </div>
-      <h1>
-        <span data-en="Your headset button," data-zh="让你的耳机按键，">Your headset button,</span><br/>
-        <span class="accent" data-en="now a Mac key." data-zh="变成真正的 Mac 快捷键。">now a Mac key.</span>
-      </h1>
-      <p class="hero-sub"
-         data-en="Remap USB-C EarPods, office USB headsets (Jabra, Poly, Logitech), and Bluetooth headsets to real held keyboard keys like Right Option, Fn, or F13 — crafted for Push-to-Talk voice dictation and meetings."
-         data-zh="把 USB-C EarPods、通用 USB 办公/游戏耳麦（Jabra、罗技、Poly）乃至蓝牙耳机上的按键映射为右 Option、Fn、F13 等真实快捷键——专为语音输入 Push-to-Talk 与通话打磨。">
-        Remap USB-C EarPods, office USB headsets (Jabra, Poly, Logitech), and Bluetooth headsets to real held keyboard keys like Right Option, Fn, or F13 — crafted for Push-to-Talk voice dictation and meetings.
-      </p>
-
-      <div class="hero-ctas">
-        <a class="btn primary" href="https://github.com/arronKler/cordkey" target="_blank" rel="noopener">
-          <span data-en="Get CordKey on GitHub" data-zh="前往 GitHub 获取">Get CordKey on GitHub</span>
-        </a>
-        <a class="btn" href="#cli">
-          <span data-en="Quick Install" data-zh="快速安装">Quick Install</span>
-        </a>
-      </div>
-
-      <div class="install-strip">
-        <code id="installCmd">git clone https://github.com/arronKler/cordkey.git && cd cordkey && make app-install</code>
-        <button class="copy-mini" id="copyInstall" type="button" data-en="Copy" data-zh="复制">Copy</button>
-      </div>
-
-      <div class="meta-line">
-        <span data-en="✓ Exclusive HID Seize (Mac F8 untouched)" data-zh="✓ 独占拦截（不影响 Mac 键盘播放键）">✓ Exclusive HID Seize (Mac F8 untouched)</span>
-        <span data-en="✓ Consumer 0x0C + Telephony 0x0B" data-zh="✓ Consumer + Telephony 双页支持">✓ Consumer 0x0C + Telephony 0x0B</span>
-        <span data-en="✓ Menu Bar App + CLI" data-zh="✓ 状态栏应用 + CLI 双形态">✓ Menu Bar App + CLI</span>
-      </div>
+  <div class="hero">
+    <div class="hero-kicker">
+      <span class="kicker-dot"></span>
+      <span data-en="macOS 13+ Universal · Native Swift · Zero Dependencies" data-zh="macOS 13+ 通用版 · 原生 Swift · 零第三方依赖">macOS 13+ Universal · Native Swift · Zero Dependencies</span>
     </div>
 
-    <!-- INTERACTIVE DEMO -->
-    <div class="demo-stage" aria-label="Interactive CordKey Demo">
-      <div class="demo-menubar">
-        <div style="display:flex;gap:10px;align-items:center;">
+    <h1>
+      <span data-en="Your headset button," data-zh="让你的耳机按键，">Your headset button,</span><br/>
+      <em data-en="now a Mac key." data-zh="变成真正的 Mac 快捷键。">now a Mac key.</em>
+    </h1>
+
+    <p class="hero-sub"
+       data-en="Turn USB-C EarPods, office USB headsets (Jabra, Poly, Logitech), and Bluetooth headsets into held macOS shortcuts like Right Option, Fn, or F13 — engineered for Push-to-Talk dictation and voice calls."
+       data-zh="把 USB-C EarPods、通用 USB 办公耳麦（Jabra、Poly、罗技）与蓝牙耳机上的物理按键，变成右 Option、Fn、F13 等真实快捷键——专为语音输入 Push-to-Talk 与会议通话打造。">
+      Turn USB-C EarPods, office USB headsets (Jabra, Poly, Logitech), and Bluetooth headsets into held macOS shortcuts like Right Option, Fn, or F13 — engineered for Push-to-Talk dictation and voice calls.
+    </p>
+
+    <div class="hero-actions">
+      <a class="btn-download" id="primaryDownloadBtn" href="https://github.com/arronKler/cordkey/releases/latest/download/CordKey-1.0.0-macos-universal.dmg">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span data-en="Download for macOS (.dmg)" data-zh="下载 macOS 安装包 (.dmg)">Download for macOS (.dmg)</span>
+      </a>
+      <a class="btn-ghost" href="https://github.com/arronKler/cordkey" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        <span data-en="View Source on GitHub" data-zh="查看 GitHub 源码">View Source on GitHub</span>
+      </a>
+    </div>
+
+    <div class="hero-specs">
+      <span id="releaseVerSpec">v1.0.0 Universal (Apple Silicon &amp; Intel)</span>
+      <span>·</span>
+      <a href="https://github.com/arronKler/cordkey/releases" style="text-decoration:underline;text-underline-offset:3px;" data-en="All Releases &amp; SHA-256" data-zh="所有版本与校验和">All Releases &amp; SHA-256</a>
+      <span>·</span>
+      <span data-en="MIT Open Source" data-zh="MIT 免费开源">MIT Open Source</span>
+    </div>
+
+    <!-- INTERACTIVE MACOS + HARDWARE SIMULATOR -->
+    <div class="stage-shell" aria-label="Interactive CordKey Desktop Simulator">
+      <div class="mac-bar">
+        <div class="mac-bar-left">
           <strong style="font-size:13px;"></strong>
-          <span style="opacity:0.8;">CordKey</span>
+          <span style="font-weight:600;">CordKey</span>
+          <span style="opacity:0.65;">File</span>
+          <span style="opacity:0.65;">Edit</span>
         </div>
-        <div class="demo-mb-right">
-          <div class="demo-mb-pill" id="demoMbPill">
+        <div class="mac-bar-right">
+          <div class="mb-status" id="mbStatus">
             <svg width="14" height="14" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
               <line x1="9" y1="1.5" x2="9" y2="3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
               <line x1="9" y1="14.5" x2="9" y2="16.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
               <rect x="5.4" y="3.2" width="7.2" height="11.6" rx="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/>
-              <rect id="demoMbCore" x="7.1" y="6.8" width="3.8" height="4.4" rx="1.3" fill="currentColor"/>
+              <rect id="mbCore" x="7.1" y="6.8" width="3.8" height="4.4" rx="1.3" fill="currentColor"/>
             </svg>
-            <span id="demoMbTimer" style="display:none;">0:00</span>
+            <span id="mbTimer" style="display:none;">0:00</span>
           </div>
-          <span style="opacity:0.6;">100%</span>
+          <span style="opacity:0.65;font-size:11px;">100%</span>
         </div>
       </div>
 
-      <div class="demo-body">
-        <div class="demo-hud" id="demoHud" title="Click to release">
-          <span class="hud-pulse"></span>
-          <span>Right Option</span>
-          <span id="demoHudTimer" style="font-variant-numeric:tabular-nums;opacity:0.8;">0:00</span>
-          <span style="opacity:0.55;font-size:11px;">×</span>
-        </div>
-
-        <div class="demo-mode-tabs">
-          <button class="demo-mode-btn active" data-mode="toggle" type="button" data-en="Click Toggle" data-zh="单击切换">Click Toggle</button>
-          <button class="demo-mode-btn" data-mode="hold" type="button" data-en="Hold to Hold" data-zh="按住保持">Hold to Hold</button>
-        </div>
-
-        <div class="remote-wrap">
-          <div class="cord-line"></div>
-          <div class="remote-capsule">
-            <div class="remote-glyph">+</div>
-            <button class="remote-btn" id="demoRemoteBtn" type="button" aria-label="Test inline headset button">
-              <span class="remote-ridge"></span>
-            </button>
-            <div class="remote-glyph">−</div>
+      <div class="stage-canvas">
+        <div class="stage-hud-slot">
+          <div class="live-hud" id="liveHud" title="Click to release">
+            <span class="hud-led"></span>
+            <span>Right Option</span>
+            <span id="hudTimer" style="font-family:var(--mono);opacity:0.8;">0:00</span>
+            <span style="opacity:0.45;">×</span>
           </div>
-          <div class="cord-line"></div>
         </div>
 
-        <div class="demo-hint" id="demoHint" data-en="Click the orange button once to toggle hold — click again (or click the HUD) to release." data-zh="点击一次橙色按键体验「单击切换」，再点一次（或点上方浮窗）松开。">
-          Click the orange button once to toggle hold — click again (or click the HUD) to release.
-        </div>
+        <div class="stage-split">
+          <!-- Hardware Inline Remote -->
+          <div class="hw-bay">
+            <div class="hw-caption" data-en="Interactive Inline Remote · Try Pressing" data-zh="交互式线控演示 · 点击或长按体验">Interactive Inline Remote · Try Pressing</div>
+            <div class="remote-unit">
+              <div class="wire-seg"></div>
+              <div class="capsule-body">
+                <button class="vol-btn" id="volUpBtn" type="button" title="Volume +">+</button>
+                <button class="center-key" id="centerKeyBtn" type="button" aria-label="Press center headset button">
+                  <span class="key-ridge"></span>
+                </button>
+                <button class="vol-btn" id="volDownBtn" type="button" title="Volume −">−</button>
+              </div>
+              <div class="wire-seg"></div>
+            </div>
+            <div class="hw-hint" id="hwHint"></div>
+          </div>
 
-        <div class="demo-log">
-          <span id="demoLogText">HID 0x0C:0xCD · Ready — press the orange button</span>
-          <span class="tag" id="demoLogState">IDLE</span>
+          <!-- Miniature Native Popover -->
+          <div class="sim-popover">
+            <div class="pop-head">
+              <div class="pop-head-left">
+                <img src="assets/icon.png" alt="" />
+                <div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <strong style="font-size:13px;">CordKey</strong>
+                    <span class="pop-pill" data-en="● Exclusive" data-zh="● 独占">● Exclusive</span>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--text-3);font-family:var(--mono);">EarPods (0x05ac:0x110b)</div>
+                </div>
+              </div>
+              <button class="tactile-sw" id="simMasterSw" type="button" aria-label="Master switch"><span></span></button>
+            </div>
+
+            <div class="pop-card">
+              <div class="pop-row" id="rowPlay">
+                <span data-en="Center Play" data-zh="中间播放键">Center Play</span>
+                <span class="pop-key-val" data-en="Right Option ▾" data-zh="右 Option ▾">Right Option ▾</span>
+              </div>
+              <div class="pop-row" id="rowVolUp">
+                <span data-en="Volume +" data-zh="音量 + 键">Volume +</span>
+                <span style="font-size:11px;color:var(--text-3);" data-en="Native Vol+" data-zh="原生音量+">Native Vol+</span>
+              </div>
+              <div class="pop-row" id="rowVolDown">
+                <span data-en="Volume −" data-zh="音量 − 键">Volume −</span>
+                <span style="font-size:11px;color:var(--text-3);" data-en="Native Vol−" data-zh="原生音量−">Native Vol−</span>
+              </div>
+            </div>
+
+            <div class="pop-card">
+              <div class="pop-seg" id="simModeSeg">
+                <button data-mode="hold" type="button" data-en="Hold" data-zh="按住保持">Hold</button>
+                <button data-mode="delay" type="button" data-en="Hold 300ms" data-zh="长按触发">Hold 300ms</button>
+                <button class="active" data-mode="toggle" type="button" data-en="Click Toggle" data-zh="单击切换">Click Toggle</button>
+              </div>
+              <div class="pop-row" style="padding:2px 2px 0;">
+                <span style="font-size:11.5px;color:var(--text-2);" data-en="Floating HUD" data-zh="悬浮状态胶囊">Floating HUD</span>
+                <button class="tactile-sw" id="simHudSw" type="button" aria-label="Floating HUD"><span></span></button>
+              </div>
+            </div>
+
+            <div class="pop-foot">
+              <span class="pop-foot-dot" id="popFootDot"></span>
+              <span id="popFootLog">0x0C:0xCD · Ready — press the orange button</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- FEATURES BENTO -->
-  <section id="features">
-    <div class="sec-eyebrow" data-en="Capabilities" data-zh="核心能力">Capabilities</div>
-    <h2 class="sec-title" data-en="Built for real desk setups, not just one headset." data-zh="为真实桌面工作流打磨，不止于苹果耳机。">Built for real desk setups, not just one headset.</h2>
-    <p class="sec-desc" data-en="Every detail is engineered around daily voice dictation, multi-headset desks, and zero-friction macOS ergonomics." data-zh="从语音听写防杂音、多耳机热插拔到分应用自动切换，全部原生 Swift 实现，轻如鸿毛。">
-      Every detail is engineered around daily voice dictation, multi-headset desks, and zero-friction macOS ergonomics.
-    </p>
-
-    <div class="bento">
-      <div class="bento-card wide">
-        <div class="icon-box">🎧</div>
-        <h3 data-en="Universal USB/HID (Consumer + Telephony) & One-Click Learn" data-zh="通用 USB 耳麦双页兼容 + 一键识别耳机键">Universal USB/HID (Consumer + Telephony) &amp; One-Click Learn</h3>
-        <p data-en="Works out of the box with EarPods media buttons (0x0C) and dedicated Mic Mute / Hook Switch / Call Hold buttons (0x0B) on Jabra, Poly, Logitech, and HyperX USB headsets. Click Learn Button, press any button on your headset, and CordKey automatically binds both Vendor/Product ID and HID usage code."
-           data-zh="同时支持标准媒体键（Consumer 0x0C）与办公/会议耳麦专属的麦克风静音键（0x0B:0x2F）、通话/挂断键（0x0B:0x20）。点击面板「识别耳机键」按一下耳机按钮，自动识别设备 ID 与键码，零配置上手。">
-          Works out of the box with EarPods media buttons (0x0C) and dedicated Mic Mute / Hook Switch / Call Hold buttons (0x0B) on Jabra, Poly, Logitech, and HyperX USB headsets. Click Learn Button, press any button on your headset, and CordKey automatically binds both Vendor/Product ID and HID usage code.
-        </p>
-      </div>
-
-      <div class="bento-card">
-        <div class="icon-box">🔒</div>
-        <h3 data-en="Input Microphone Lock" data-zh="输入麦克风锁定">Input Microphone Lock</h3>
-        <p data-en="Lock your preferred CoreAudio microphone by stable UID so macOS stops silently hijacking your default input whenever you replug USB-C EarPods."
-           data-zh="按 CoreAudio 稳定 UID 锁定首选麦克风，彻底告别每次重插 EarPods 都被 macOS 抢走默认输入设备的烦恼。">
-          Lock your preferred CoreAudio microphone by stable UID so macOS stops silently hijacking your default input whenever you replug USB-C EarPods.
-        </p>
-      </div>
-
-      <div class="bento-card">
-        <div class="icon-box">⚡</div>
-        <h3 data-en="Multi-Action: Tap + Double-Tap + Hold" data-zh="单键三动作：短按 + 双击 + 长按">Multi-Action: Tap + Double-Tap + Hold</h3>
-        <p data-en="Assign independent Short Tap (native Play/Pause or custom key), Double Tap, and Hold Delay (250 / 300 / 500 ms) actions on a single button."
-           data-zh="一颗线控按键可分别绑定短按（原生播放或快捷键）、双击与长按保持动作；未设双击时短按零额外延迟。">
-          Assign independent Short Tap (native Play/Pause or custom key), Double Tap, and Hold Delay (250 / 300 / 500 ms) actions on a single button.
-        </p>
-      </div>
-
-      <div class="bento-card">
-        <div class="icon-box">🫧</div>
-        <h3 data-en="Floating Status HUD & Safety Timeout" data-zh="悬浮状态胶囊 + 超时自动松开">Floating Status HUD &amp; Safety Timeout</h3>
-        <p data-en="Optional non-activating frosted-glass pill visible over full-screen Spaces — shows elapsed time, lets you click to release, and pairs with 1m / 2m / 5m toggle auto-release."
-           data-zh="可选顶部/底部毛玻璃悬浮胶囊，全屏应用下依然可见且绝不抢焦点，点击胶囊直接松开，并配 1/2/5 分钟防忘关超时。">
-          Optional non-activating frosted-glass pill visible over full-screen Spaces — shows elapsed time, lets you click to release, and pairs with 1m / 2m / 5m toggle auto-release.
-        </p>
-      </div>
-
-      <div class="bento-card">
-        <div class="icon-box">🔄</div>
-        <h3 data-en="Per-Headset Auto-Profiles" data-zh="多耳机自动切换配置">Per-Headset Auto-Profiles</h3>
-        <p data-en="Remember separate mappings and trigger modes per headset VID:PID — plug in your office Jabra or travel EarPods and your profile switches automatically."
-           data-zh="按设备 VID:PID 独立记忆每副耳机的映射与触发方式，公司耳麦与随身 EarPods 插上即自动切换配置。">
-          Remember separate mappings and trigger modes per headset VID:PID — plug in your office Jabra or travel EarPods and your profile switches automatically.
-        </p>
-      </div>
-
-      <div class="bento-card wide">
-        <div class="icon-box">🧩</div>
-        <h3 data-en="App-Aware Rules & Bluetooth Headset Mode" data-zh="分应用自动规则 + 蓝牙耳机兼容模式">App-Aware Rules &amp; Bluetooth Headset Mode</h3>
-        <p data-en="Auto-pause mapping in Music, IINA, or QuickTime so playback controls stay native, or override Play to mute shortcuts in Lark, Zoom, and Discord. Enable Bluetooth Compatibility Mode to use AirPods, Sony, or Bose headsets via Click Toggle when no USB headset is plugged in."
-           data-zh="在 Music / IINA / QuickTime 中自动暂停映射保留原生播放，或在飞书 / Zoom / Discord 中自动覆写为静音快捷键；并支持开启蓝牙兼容模式，让 AirPods / Sony / Bose 耳机通过单击切换同样可用。">
-          Auto-pause mapping in Music, IINA, or QuickTime so playback controls stay native, or override Play to mute shortcuts in Lark, Zoom, and Discord. Enable Bluetooth Compatibility Mode to use AirPods, Sony, or Bose headsets via Click Toggle when no USB headset is plugged in.
-        </p>
-      </div>
-
-      <div class="bento-card">
-        <div class="icon-box">⌨️</div>
-        <h3 data-en="True Left/Right Modifier Recording" data-zh="左右修饰键精准录制">True Left/Right Modifier Recording</h3>
-        <p data-en="Emits authentic IOKit device masks (NX_DEVICERALTKEYMASK, etc.) so Wispr Flow, Superwhisper, and VoiceInk accurately detect Right Option, Fn/Globe, and chords."
-           data-zh="完整注入 IOKit 左右修饰键设备位掩码，精准兼容区分右 Option、Fn/地球键与组合键的各类语音听写工具。">
-          Emits authentic IOKit device masks (NX_DEVICERALTKEYMASK, etc.) so Wispr Flow, Superwhisper, and VoiceInk accurately detect Right Option, Fn/Globe, and chords.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- EARPODS HARDWARE PHYSICS -->
-  <section id="earpods">
-    <div class="physics-box">
+  <!-- SECTION 01: HARDWARE ENGINEERING SCHEMATIC -->
+  <section id="engineering">
+    <div class="sec-head">
       <div>
-        <div class="sec-eyebrow" data-en="Hardware-Aware Engineering" data-zh="硬件级专项优化">Hardware-Aware Engineering</div>
-        <h2 class="sec-title" data-en="Why EarPods go silent when you hold the center button." data-zh="为什么按住 EarPods 中间键说话时麦会没声音？">Why EarPods go silent when you hold the center button.</h2>
-        <p style="font-size:14.5px;color:var(--text-muted);line-height:1.68;"
-           data-en="Apple's inline remote shares one electrical wire with the microphone — physically holding the center button shorts the EarPods mic to ground. CordKey detects this exact setup and gives you two effortless fixes right inside the popover."
-           data-zh="EarPods 线控中间键与麦克风共用同一信号线，物理按住时会把耳机麦直接短路到地线。CordKey 针对这一硬件电路特性提供两种开箱即用的无痛方案。">
-          Apple's inline remote shares one electrical wire with the microphone — physically holding the center button shorts the EarPods mic to ground. CordKey detects this exact setup and gives you two effortless fixes right inside the popover.
+        <div class="sec-num">01 / HARDWARE ENGINEERING</div>
+        <h2 class="sec-title" data-en="Built around real headset physics." data-zh="针对真实耳机硬件电路打磨。">Built around real headset physics.</h2>
+      </div>
+      <p class="sec-sub"
+         data-en="Why naive key-remappers fail on USB-C EarPods — and how CordKey solves inline microphone shorting cleanly."
+         data-zh="为什么通用改键工具在 EarPods 上会“按住说话没声音”？CordKey 从物理电路出发提供两种无痛解法。">
+        Why naive key-remappers fail on USB-C EarPods — and how CordKey solves inline microphone shorting cleanly.
+      </p>
+    </div>
+
+    <div class="schematic-grid">
+      <div class="schem-card">
+        <div class="schem-label">
+          <span>FIG 01 · CTIA INLINE CIRCUIT</span>
+          <span class="pill-red" data-en="MIC SHORTED ON HOLD" data-zh="长按短路麦克风">MIC SHORTED ON HOLD</span>
+        </div>
+        <div class="schem-svg-box">
+          <svg viewBox="0 0 420 132" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+            <g stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.55">
+              <line x1="20" y1="36" x2="148" y2="36"/>
+              <line x1="196" y1="36" x2="395" y2="36"/>
+              <line x1="20" y1="102" x2="395" y2="102"/>
+              <line x1="254" y1="36" x2="254" y2="55"/>
+              <line x1="254" y1="83" x2="254" y2="102"/>
+            </g>
+            <!-- Mic capsule -->
+            <circle cx="172" cy="36" r="22" fill="none" stroke="currentColor" stroke-width="1.6" opacity="0.8"/>
+            <text x="172" y="40" text-anchor="middle" fill="currentColor" font-family="ui-monospace,monospace" font-size="10" font-weight="600">MIC</text>
+            <!-- Center switch shorting MIC+ to GND -->
+            <rect x="234" y="55" width="40" height="28" rx="6" fill="rgba(249,87,34,0.18)" stroke="#f95722" stroke-width="1.8"/>
+            <line x1="254" y1="59" x2="254" y2="79" stroke="#f95722" stroke-width="2.5"/>
+            <circle cx="254" cy="36" r="3.5" fill="#f95722"/>
+            <circle cx="254" cy="102" r="3.5" fill="#f95722"/>
+            <text x="290" y="66" fill="#f95722" font-family="ui-monospace,monospace" font-size="10" font-weight="700">PLAY SWITCH (0 Ω)</text>
+            <text x="290" y="81" fill="currentColor" opacity="0.6" font-family="ui-monospace,monospace" font-size="9.5">SHORTS MIC+ → GND</text>
+            <text x="20" y="25" fill="currentColor" opacity="0.55" font-family="ui-monospace,monospace" font-size="9.5">MIC+</text>
+            <text x="20" y="118" fill="currentColor" opacity="0.55" font-family="ui-monospace,monospace" font-size="9.5">GND</text>
+            <text x="395" y="25" text-anchor="end" fill="currentColor" opacity="0.55" font-family="ui-monospace,monospace" font-size="9.5">USB-C ADC</text>
+          </svg>
+        </div>
+        <h3 data-en="Hardware cause: shared mic bias line" data-zh="硬件原因：按键与麦共用信号线">Hardware cause: shared mic bias line</h3>
+        <p data-en="While you hold the EarPods center button, the switch pulls MIC+ directly to ground so the USB-C ADC detects the press — physically muting the EarPods mic until release."
+           data-zh="按住 EarPods 中间键期间，物理开关会把麦克风信号线直接拉到地线以便芯片识别按键，导致 EarPods 自带麦在按住期间完全无声。">
+          While you hold the EarPods center button, the switch pulls MIC+ directly to ground so the USB-C ADC detects the press — physically muting the EarPods mic until release.
         </p>
       </div>
-      <div class="physics-solutions">
-        <div class="sol-pill">
-          <strong data-en="1. Clean-Audio Click Toggle (60 ms settle)" data-zh="1. 纯净音频「单击切换」（松手后 60ms 触发）">1. Clean-Audio Click Toggle (60 ms settle)</strong>
-          <span data-en="Engages 60 ms after physical release so the mic is completely un-shorted with zero click pop, and releases instantly on the 2nd press."
-                data-zh="第一下松手后延迟 60ms 等触点脱离短路再开启录音，彻底消除开头静音与咔哒声；第二下按下瞬间立即结束。">
-            Engages 60 ms after physical release so the mic is completely un-shorted with zero click pop, and releases instantly on the 2nd press.
-          </span>
+
+      <div class="schem-card">
+        <div class="schem-label">
+          <span>FIG 02 · CLEAN-AUDIO TIMELINE</span>
+          <span class="pill-ok" data-en="60MS CONTACT SETTLE" data-zh="60ms 零杂音触发">60MS CONTACT SETTLE</span>
         </div>
-        <div class="sol-pill">
-          <strong data-en="2. One-Click Built-in Mic + Mic Lock" data-zh="2. 一键切换 MacBook 麦克风 + 锁定防抢麦">2. One-Click Built-in Mic + Mic Lock</strong>
-          <span data-en="Keep Hold-to-Hold feel by switching input to your MacBook Pro Mic and locking it — EarPods stays your audio output while your Mac mic captures clean speech."
-                data-zh="偏好「按住说话、松手发送」手感？面板一键切换并锁定 MacBook 机身麦，耳机继续负责听声音，按住线控完全不静音。">
-            Keep Hold-to-Hold feel by switching input to your MacBook Pro Mic and locking it — EarPods stays your audio output while your Mac mic captures clean speech.
-          </span>
+        <div class="schem-svg-box">
+          <svg viewBox="0 0 420 132" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+            <!-- Baseline -->
+            <line x1="18" y1="88" x2="402" y2="88" stroke="currentColor" stroke-opacity="0.22" stroke-width="1"/>
+            <!-- 1st Click Pulse -->
+            <rect x="28" y="64" width="42" height="24" rx="4" fill="rgba(148,163,184,0.22)" stroke="currentColor" stroke-opacity="0.45"/>
+            <text x="49" y="56" text-anchor="middle" fill="currentColor" opacity="0.65" font-family="ui-monospace,monospace" font-size="9">TAP 1</text>
+            <!-- 60ms Settle Gap -->
+            <rect x="70" y="68" width="38" height="20" fill="rgba(249,87,34,0.14)" stroke="#f95722" stroke-dasharray="3 2"/>
+            <text x="89" y="106" text-anchor="middle" fill="#f95722" font-family="ui-monospace,monospace" font-size="9" font-weight="700">60ms</text>
+            <!-- Clean Active Key Hold Window -->
+            <rect x="108" y="34" width="218" height="54" rx="6" fill="rgba(34,197,94,0.14)" stroke="#22c55e" stroke-width="1.6"/>
+            <text x="217" y="56" text-anchor="middle" fill="#22c55e" font-family="ui-monospace,monospace" font-size="10" font-weight="700">KEY HELD · CLEAN MIC</text>
+            <path d="M134 72 q8 -10 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0" fill="none" stroke="#22c55e" stroke-width="1.6" opacity="0.8"/>
+            <!-- 2nd Click Instant Cut -->
+            <rect x="326" y="64" width="42" height="24" rx="4" fill="rgba(249,87,34,0.22)" stroke="#f95722"/>
+            <text x="347" y="56" text-anchor="middle" fill="#f95722" font-family="ui-monospace,monospace" font-size="9" font-weight="700">TAP 2</text>
+            <text x="347" y="106" text-anchor="middle" fill="currentColor" opacity="0.65" font-family="ui-monospace,monospace" font-size="9">0ms STOP</text>
+          </svg>
         </div>
+        <h3 data-en="CordKey's fix: Clean-Audio Toggle + Mic Lock" data-zh="双解法：纯净单击切换 + 麦克风锁定">CordKey's fix: Clean-Audio Toggle + Mic Lock</h3>
+        <p data-en="Click Toggle waits 60 ms after release (zero click pop), and cuts on the 2nd press-down. Or lock input to your MacBook Pro Mic in 1 click to keep Hold-to-Talk with clean audio."
+           data-zh="单击切换在第一下松手 60ms 后再按下目标键、第二下按下瞬间立即结束；或者一键锁定 MacBook 机身麦，保留“按住说话”手感且永不被热插拔抢麦。">
+          Click Toggle waits 60 ms after release (zero click pop), and cuts on the 2nd press-down. Or lock input to your MacBook Pro Mic in 1 click to keep Hold-to-Talk with clean audio.
+        </p>
       </div>
     </div>
   </section>
 
-  <!-- COMPATIBILITY -->
+  <!-- SECTION 02: PRECISION FEATURE MATRIX -->
+  <section id="specs">
+    <div class="sec-head">
+      <div>
+        <div class="sec-num">02 / ARCHITECTURE &amp; FEATURES</div>
+        <h2 class="sec-title" data-en="Six systems, one tiny menu bar app." data-zh="六大能力，收进一枚极简状态栏图标。">Six systems, one tiny menu bar app.</h2>
+      </div>
+      <p class="sec-sub"
+         data-en="Pure Swift + Apple frameworks. Zero Electron, zero background daemons, zero telemetry."
+         data-zh="纯原生 Swift 与系统框架打造，极低内存占用，不驻留任何冗余后台进程。">
+        Pure Swift + Apple frameworks. Zero Electron, zero background daemons, zero telemetry.
+      </p>
+    </div>
+
+    <div class="spec-matrix">
+      <div class="spec-cell">
+        <div class="spec-top">
+          <span class="spec-idx">01</span>
+          <span class="spec-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></span>
+        </div>
+        <h3 data-en="Universal USB HID + Learn Button" data-zh="通用 USB 耳麦双页 + 一键识别">Universal USB HID + Learn Button</h3>
+        <p data-en="Supports both Consumer media keys and office Telephony keys (Mic Mute, Hook Switch, Call Hold). Press any button on any USB headset to bind automatically."
+           data-zh="同时支持 Consumer 媒体页与办公耳麦 Telephony 通话页（静音键、挂断键）。点「识别耳机键」按一下即可自动录入设备与键码。">
+          Supports both Consumer media keys and office Telephony keys (Mic Mute, Hook Switch, Call Hold). Press any button on any USB headset to bind automatically.
+        </p>
+        <div class="spec-code">IOHIDManager · 0x0C + 0x0B · Seize</div>
+      </div>
+
+      <div class="spec-cell">
+        <div class="spec-top">
+          <span class="spec-idx">02</span>
+          <span class="spec-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+        </div>
+        <h3 data-en="CoreAudio Input Mic Lock" data-zh="CoreAudio 麦克风防抢麦锁定">CoreAudio Input Mic Lock</h3>
+        <p data-en="Lock your preferred microphone by stable CoreAudio UID so plugging in USB-C EarPods never silently steals your default input device."
+           data-zh="按 CoreAudio 稳定 UID 锁定首选输入麦，插拔 EarPods 再也不会被 macOS 默默抢走默认麦克风。">
+          Lock your preferred microphone by stable CoreAudio UID so plugging in USB-C EarPods never silently steals your default input device.
+        </p>
+        <div class="spec-code">kAudioDevicePropertyDeviceUID</div>
+      </div>
+
+      <div class="spec-cell">
+        <div class="spec-top">
+          <span class="spec-idx">03</span>
+          <span class="spec-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+        </div>
+        <h3 data-en="Multi-Action: Tap / 2×Tap / Hold" data-zh="单键三动作：短按 / 双击 / 长按">Multi-Action: Tap / 2×Tap / Hold</h3>
+        <p data-en="Assign independent Short Tap (native or shortcut), Double Tap, and Hold Delay (250 / 300 / 500 ms) actions to one button with zero delay when double-tap is off."
+           data-zh="单键支持独立短按、双击与长按保持；未开启双击时短按零额外等待，兼顾听歌与语音输入。">
+          Assign independent Short Tap (native or shortcut), Double Tap, and Hold Delay (250 / 300 / 500 ms) actions to one button with zero delay when double-tap is off.
+        </p>
+        <div class="spec-code">--hold-ms 300 --tap --double-tap</div>
+      </div>
+
+      <div class="spec-cell">
+        <div class="spec-top">
+          <span class="spec-idx">04</span>
+          <span class="spec-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="4" width="20" height="16" rx="3"/><circle cx="8" cy="12" r="2"/><line x1="12" y1="12" x2="18" y2="12"/></svg></span>
+        </div>
+        <h3 data-en="Floating HUD & Toggle Timeout" data-zh="悬浮状态胶囊 + 超时保护">Floating HUD &amp; Toggle Timeout</h3>
+        <p data-en="Non-activating frosted-glass pill floats over full-screen Spaces with elapsed timer and click-to-release, backed by optional 1m / 2m / 5m auto-release."
+           data-zh="全屏下可见的非激活毛玻璃浮窗（点击即松开、绝不抢焦点），配合 1/2/5 分钟防忘关自动释放。">
+          Non-activating frosted-glass pill floats over full-screen Spaces with elapsed timer and click-to-release, backed by optional 1m / 2m / 5m auto-release.
+        </p>
+        <div class="spec-code">NSPanel · .nonactivatingPanel</div>
+      </div>
+
+      <div class="spec-cell">
+        <div class="spec-top">
+          <span class="spec-idx">05</span>
+          <span class="spec-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></span>
+        </div>
+        <h3 data-en="Per-Headset Auto-Profiles" data-zh="多耳机热插拔自动切换">Per-Headset Auto-Profiles</h3>
+        <p data-en="Saves distinct mappings and trigger modes per VID:PID — swap between an office Jabra headset and travel EarPods seamlessly."
+           data-zh="按设备 VID:PID 自动持久化独立方案，插上公司 USB 耳麦或外出 EarPods 自动切换对应配置。">
+          Saves distinct mappings and trigger modes per VID:PID — swap between an office Jabra headset and travel EarPods seamlessly.
+        </p>
+        <div class="spec-code">VID:PID Profile Store · Hot-Plug</div>
+      </div>
+
+      <div class="spec-cell">
+        <div class="spec-top">
+          <span class="spec-idx">06</span>
+          <span class="spec-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg></span>
+        </div>
+        <h3 data-en="App-Aware Rules & Bluetooth Mode" data-zh="分应用规则 + 蓝牙耳机兼容">App-Aware Rules &amp; Bluetooth Mode</h3>
+        <p data-en="Auto-pause in Music/IINA, override Play for mute in Lark/Zoom/Discord, and optionally enable Bluetooth Play interception for AirPods & Sony headsets."
+           data-zh="在 Music/IINA 自动暂停，在飞书/Zoom/Discord 覆写静音键；并可选开启蓝牙模式支持 AirPods / Sony。">
+          Auto-pause in Music/IINA, override Play for mute in Lark/Zoom/Discord, and optionally enable Bluetooth Play interception for AirPods &amp; Sony headsets.
+        </p>
+        <div class="spec-code">NSWorkspace + AVRCP Media Tap</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 03: COMPATIBILITY -->
   <section id="compatibility">
-    <div class="sec-eyebrow" data-en="Hardware Matrix" data-zh="设备兼容矩阵">Hardware Matrix</div>
-    <h2 class="sec-title" data-en="Works across wired USB & Bluetooth headsets." data-zh="覆盖主流有线 USB 耳麦与蓝牙耳机。">Works across wired USB &amp; Bluetooth headsets.</h2>
-    <div class="table-wrap" style="margin-top:20px;">
+    <div class="sec-head">
+      <div>
+        <div class="sec-num">03 / COMPATIBILITY MATRIX</div>
+        <h2 class="sec-title" data-en="Hardware support at a glance." data-zh="支持的耳机与协议一览。">Hardware support at a glance.</h2>
+      </div>
+    </div>
+
+    <div class="compat-box">
       <table>
         <thead>
           <tr>
-            <th data-en="Headset Type" data-zh="耳机类型">Headset Type</th>
-            <th data-en="Hold to Hold" data-zh="按住保持">Hold to Hold</th>
-            <th data-en="Click Toggle" data-zh="单击切换">Click Toggle</th>
-            <th data-en="Exclusive Seize" data-zh="独占拦截">Exclusive Seize</th>
+            <th data-en="Hardware" data-zh="设备类型">Hardware</th>
+            <th data-en="Protocol" data-zh="底层协议">Protocol</th>
+            <th data-en="Hold" data-zh="按住">Hold</th>
+            <th data-en="Toggle" data-zh="切换">Toggle</th>
             <th data-en="Notes" data-zh="说明">Notes</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>Apple USB-C EarPods</strong> <span class="tag-pill">Default</span></td>
-            <td class="ok">✓*</td>
-            <td class="ok">✓</td>
-            <td class="ok">✓</td>
-            <td data-en="*Use Click Toggle or Mic Lock to MacBook Mic for clean speech." data-zh="*配合单击切换或锁定 MacBook 麦克风使用，彻底避开物理短路。">*Use Click Toggle or Mic Lock to MacBook Mic for clean speech.</td>
+            <td><strong>Apple USB-C EarPods</strong></td>
+            <td class="mono-id">USB · 0x0C (0x05ac:0x110b)</td>
+            <td><span class="dot-yes">Yes*</span></td>
+            <td><span class="dot-yes">Yes</span></td>
+            <td data-en="*Pair with Click Toggle or Mic Lock to MacBook Mic for clean audio." data-zh="*建议搭配单击切换或锁定 MacBook 麦克风，彻底避开物理静音。">*Pair with Click Toggle or Mic Lock to MacBook Mic for clean audio.</td>
           </tr>
           <tr>
-            <td><strong>USB Office &amp; Gaming Headsets</strong> (Jabra, Poly, Logitech, HyperX)</td>
-            <td class="ok">✓</td>
-            <td class="ok">✓</td>
-            <td class="ok">✓</td>
-            <td data-en="Supports Consumer (0x0C) & Telephony (0x0B) Mic Mute / Hook buttons." data-zh="支持 Consumer 与 Telephony 双页独立静音键 / 通话键，一键识别。">Supports Consumer (0x0C) &amp; Telephony (0x0B) Mic Mute / Hook buttons.</td>
+            <td><strong>Jabra / Poly / Logitech / HyperX USB</strong></td>
+            <td class="mono-id">USB · 0x0C + 0x0B</td>
+            <td><span class="dot-yes">Yes</span></td>
+            <td><span class="dot-yes">Yes</span></td>
+            <td data-en="Supports dedicated Mic Mute (0x2F) & Hook Switch (0x20) via Learn Button." data-zh="支持独立麦克风静音键与通话键，点击「识别耳机键」一键绑定。">Supports dedicated Mic Mute (0x2F) &amp; Hook Switch (0x20) via Learn Button.</td>
           </tr>
           <tr>
-            <td><strong>USB-C to 3.5 mm DAC Adapters</strong></td>
-            <td class="ok">✓</td>
-            <td class="ok">✓</td>
-            <td class="ok">✓</td>
-            <td data-en="Detected as standard USB HID Consumer device via Learn Button." data-zh="识别为标准 USB HID 媒体设备，一键学习即可使用。">Detected as standard USB HID Consumer device via Learn Button.</td>
+            <td><strong>USB-C to 3.5 mm DAC Dongles</strong></td>
+            <td class="mono-id">USB · 0x0C</td>
+            <td><span class="dot-yes">Yes</span></td>
+            <td><span class="dot-yes">Yes</span></td>
+            <td data-en="Exposes standard Consumer HID buttons; Mac keyboard F8 stays untouched." data-zh="标准 USB HID 媒体设备，独占拦截且不影响 Mac 键盘播放键。">Exposes standard Consumer HID buttons; Mac keyboard F8 stays untouched.</td>
           </tr>
           <tr>
-            <td><strong>Bluetooth Headsets</strong> (AirPods, Sony WH/WF, Bose)</td>
-            <td style="color:var(--text-dim);">—</td>
-            <td class="ok">✓</td>
-            <td data-en="Media Tap" data-zh="媒体键拦截">Media Tap</td>
-            <td data-en="Enable Bluetooth Mode in Advanced (AVRCP sends instant taps)." data-zh="在高级选项开启蓝牙兼容模式（AVRCP 发送单击脉冲，搭配单击切换）。">Enable Bluetooth Mode in Advanced (AVRCP sends instant taps).</td>
+            <td><strong>AirPods / Sony / Bose (Bluetooth)</strong></td>
+            <td class="mono-id">AVRCP · Media Tap</td>
+            <td style="color:var(--text-3);">—</td>
+            <td><span class="dot-yes">Yes</span></td>
+            <td data-en="Opt-in Bluetooth Compatibility Mode (uses Click Toggle; also taps F8)." data-zh="在高级选项开启蓝牙兼容模式（搭配单击切换使用）。">Opt-in Bluetooth Compatibility Mode (uses Click Toggle; also taps F8).</td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- CLI -->
-  <section id="cli">
-    <div class="sec-eyebrow" data-en="Menu Bar App & CLI" data-zh="安装与命令行">Menu Bar App &amp; CLI</div>
-    <h2 class="sec-title" data-en="Build in seconds. Zero dependencies." data-zh="源码秒级构建，零外部依赖。">Build in seconds. Zero dependencies.</h2>
-    <p class="sec-desc" data-en="Requires only macOS 13+ and Xcode Command Line Tools. Run as CordKey.app in your menu bar or invoke the same binary from your terminal or LaunchAgent." data-zh="只需 macOS 13+ 与 Xcode Command Line Tools。既可作为 CordKey.app 常驻状态栏，也可用同一二进制运行完整 CLI。">
-      Requires only macOS 13+ and Xcode Command Line Tools. Run as CordKey.app in your menu bar or invoke the same binary from your terminal or LaunchAgent.
-    </p>
-
-    <div class="terminal">
-      <div class="term-head">
-        <div class="dots"><span></span><span></span><span></span></div>
-        <span style="font-size:12px;color:#94a3b8;font-family:ui-monospace,monospace;">zsh — cordkey</span>
-        <button class="copy-mini" id="copyCli" type="button" data-en="Copy" data-zh="复制">Copy</button>
-      </div>
-      <div class="term-body" id="cliBlock">
-<div><span class="c"># 1. Install the native macOS menu bar app</span></div>
-<div><span class="p">$</span> git clone https://github.com/arronKler/cordkey.git &amp;&amp; cd cordkey</div>
-<div><span class="p">$</span> make app-install &amp;&amp; open /Applications/CordKey.app</div>
-<br/>
-<div><span class="c"># 2. Or run directly from CLI with full multi-action &amp; Telephony support</span></div>
-<div><span class="p">$</span> ./bin/cordkey <span class="k">devices</span>                                          <span class="c"># list USB Consumer/Telephony headsets</span></div>
-<div><span class="p">$</span> ./bin/cordkey <span class="k">probe</span>                                            <span class="c"># inspect raw PAGE:USAGE codes live</span></div>
-<div><span class="p">$</span> ./bin/cordkey <span class="k">--play</span> right_option <span class="k">--toggle --sound</span>             <span class="c"># EarPods clean-audio click toggle</span></div>
-<div><span class="p">$</span> ./bin/cordkey <span class="k">--play</span> right_option <span class="k">--hold-ms</span> 300 <span class="k">--tap</span> space    <span class="c"># dual-action: tap Space, hold Right Option</span></div>
-<div><span class="p">$</span> ./bin/cordkey <span class="k">--mic-mute</span> right_option <span class="k">--vendor</span> 0x0b0e          <span class="c"># Jabra/Poly Telephony Mic Mute button</span></div>
+  <!-- SECTION 04: DOWNLOAD & INSTALL -->
+  <section id="download">
+    <div class="sec-head">
+      <div>
+        <div class="sec-num">04 / OFFICIAL RELEASE</div>
+        <h2 class="sec-title" data-en="Install in thirty seconds." data-zh="三十秒完成安装上手。">Install in thirty seconds.</h2>
       </div>
     </div>
-  </section>
 
-  <!-- PRIVACY & SAFETY -->
-  <section>
-    <div class="trust-grid">
-      <div class="trust-item">
-        <strong data-en="100% Local & Offline" data-zh="100% 纯本地离线">100% Local &amp; Offline</strong>
-        <span data-en="Zero telemetry, zero analytics, zero network calls." data-zh="无埋点、无遥测、零网络请求。">Zero telemetry, zero analytics, zero network calls.</span>
+    <div class="install-card">
+      <div class="install-top">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <img src="assets/icon.png" width="58" height="58" style="border-radius:14px;" alt="CordKey Icon" />
+          <div>
+            <div style="font-size:18px;font-weight:700;letter-spacing:-0.02em;">CordKey for macOS</div>
+            <div class="mono-id" id="cardReleaseMeta">v1.0.0 · Universal (arm64 + x86_64) · macOS 13.0+ · DMG</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a class="btn-download" id="cardDownloadBtn" href="https://github.com/arronKler/cordkey/releases/latest/download/CordKey-1.0.0-macos-universal.dmg">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span data-en="Download DMG" data-zh="下载 DMG 安装包">Download DMG</span>
+          </a>
+          <a class="btn-ghost" href="https://github.com/arronKler/cordkey/releases/latest" target="_blank" rel="noopener">
+            <span data-en="Release Notes" data-zh="版本说明">Release Notes</span>
+          </a>
+        </div>
       </div>
-      <div class="trust-item">
-        <strong data-en="Never Seizes Keyboards" data-zh="绝不拦截键盘输入">Never Seizes Keyboards</strong>
-        <span data-en="IOKit strictly filters to Consumer (0x0C) & Telephony (0x0B) pages." data-zh="IOKit 严格限定耳机媒体/通话页，永不匹配或记录键盘。">IOKit strictly filters to Consumer (0x0C) &amp; Telephony (0x0B) pages.</span>
+
+      <div class="steps-3">
+        <div class="step-box">
+          <div class="sn">STEP 01</div>
+          <strong data-en="Open the DMG" data-zh="打开 DMG 安装包">Open the DMG</strong>
+          <span data-en="Download the official universal release and drag CordKey.app into Applications." data-zh="下载官方通用版 DMG，将 CordKey.app 拖入「应用程序」文件夹。">Download the official universal release and drag CordKey.app into Applications.</span>
+        </div>
+        <div class="step-box">
+          <div class="sn">STEP 02</div>
+          <strong data-en="Grant Accessibility" data-zh="授予辅助功能权限">Grant Accessibility</strong>
+          <span data-en="Click the CordKey menu bar icon → Open Settings → enable CordKey in Accessibility." data-zh="点击右上角线控图标 → 前往授权 → 在系统「辅助功能」中勾选 CordKey。">Click the CordKey menu bar icon → Open Settings → enable CordKey in Accessibility.</span>
+        </div>
+        <div class="step-box">
+          <div class="sn">STEP 03</div>
+          <strong data-en="Bind &amp; Talk" data-zh="选择按键即可开用">Bind &amp; Talk</strong>
+          <span data-en="Pick Right Option / Fn / F13 (or record any chord), plug in your headset, and go." data-zh="选定右 Option / Fn / F13（或直接按键录制），插上耳机即刻生效。">Pick Right Option / Fn / F13 (or record any chord), plug in your headset, and go.</span>
+        </div>
       </div>
-      <div class="trust-item">
-        <strong data-en="Stuck-Key & Sleep Safe" data-zh="休眠与断连防卡键">Stuck-Key &amp; Sleep Safe</strong>
-        <span data-en="Releases all held keys on disconnect, sleep, config change, or quit." data-zh="拔耳机、系统休眠、切配置或退出时自动释放所有按住的键。">Releases all held keys on disconnect, sleep, config change, or quit.</span>
+
+      <div class="gatekeeper-note">
+        <div>
+          <strong data-en="First-launch macOS Gatekeeper note:" data-zh="首次打开若提示“无法验证开发者”：">First-launch macOS Gatekeeper note:</strong>
+          <span style="color:var(--text-2);" data-en="CordKey is ad-hoc signed (no paid Developer ID yet). Right-click → Open, or clear quarantine once:" data-zh="开源版目前为免费签名，在应用程序里「右键 → 打开」，或在终端执行一次：">CordKey is ad-hoc signed (no paid Developer ID yet). Right-click → Open, or clear quarantine once:</span>
+        </div>
+        <div class="cmd-inline">
+          <code id="xattrCmd">xattr -cr /Applications/CordKey.app &amp;&amp; open /Applications/CordKey.app</code>
+          <button class="copy-btn" id="copyXattr" type="button" data-en="Copy" data-zh="复制">Copy</button>
+        </div>
       </div>
-      <div class="trust-item">
-        <strong data-en="Open Source (MIT)" data-zh="MIT 协议开源">Open Source (MIT)</strong>
-        <span data-en="Clean, auditable Swift — inspect every line and build yourself." data-zh="代码结构清晰简洁，随时审计、编译与定制。">Clean, auditable Swift — inspect every line and build yourself.</span>
-      </div>
+
+      <details class="dev-box">
+        <summary>
+          <span data-en="Developers: CLI Usage &amp; Build from Source" data-zh="开发者：命令行用法与源码编译">Developers: CLI Usage &amp; Build from Source</span>
+          <span class="mono-id">Swift · Zero Dependencies ▾</span>
+        </summary>
+        <pre>git clone https://github.com/arronKler/cordkey.git &amp;&amp; cd cordkey
+make app-install &amp;&amp; open /Applications/CordKey.app
+
+# Standalone CLI examples
+./bin/cordkey devices                                       # list USB Consumer/Telephony headsets
+./bin/cordkey probe                                         # live-inspect raw PAGE:USAGE codes
+./bin/cordkey --play right_option --toggle --sound          # EarPods clean-audio click toggle
+./bin/cordkey --play right_option --hold-ms 300 --tap space # multi-action hold + short tap</pre>
+      </details>
     </div>
   </section>
 
   <footer>
     <div style="display:flex;align-items:center;gap:10px;">
-      <img src="assets/icon.png" width="22" height="22" style="border-radius:5px;" alt="" />
-      <span><strong>CordKey</strong> · MIT License · © 2026 arronkler</span>
+      <img src="assets/icon.png" width="20" height="20" style="border-radius:4.5px;" alt="" />
+      <span><strong style="color:var(--text);">CordKey</strong> · 100% Local · Zero Telemetry · MIT License © 2026 arronkler</span>
     </div>
-    <div class="footer-links">
+    <div class="foot-links">
+      <a href="https://github.com/arronKler/cordkey/releases/latest">Releases</a>
       <a href="https://github.com/arronKler/cordkey" target="_blank" rel="noopener">GitHub</a>
       <a href="https://github.com/arronKler/cordkey/blob/main/README.md" target="_blank" rel="noopener">README</a>
       <a href="https://github.com/arronKler/cordkey/blob/main/README.zh-CN.md" target="_blank" rel="noopener">中文文档</a>
@@ -1084,7 +1501,26 @@
 </main>
 
 <script>
-  // Language switcher (auto-detect zh or en, toggleable)
+  // Auto-resolve latest GitHub Release DMG link dynamically (gracefully falls back to v1.0.0)
+  (async function hydrateLatestRelease() {
+    try {
+      const res = await fetch("https://api.github.com/repos/arronKler/cordkey/releases/latest", { headers: { Accept: "application/vnd.github+json" } });
+      if (!res.ok) return;
+      const rel = await res.json();
+      const tag = rel.tag_name || "v1.0.0";
+      const dmg = (rel.assets || []).find((a) => a.name && a.name.endsWith(".dmg"));
+      const url = dmg ? dmg.browser_download_url : rel.html_url;
+      if (url) {
+        document.getElementById("primaryDownloadBtn").href = url;
+        document.getElementById("cardDownloadBtn").href = url;
+      }
+      document.querySelector(".brand-tag").textContent = tag;
+      document.getElementById("releaseVerSpec").textContent = `${tag} Universal (Apple Silicon & Intel)`;
+      document.getElementById("cardReleaseMeta").textContent = `${tag} · Universal (arm64 + x86_64) · macOS 13.0+ · DMG`;
+    } catch {}
+  })();
+
+  // Language switcher
   let lang = (navigator.language || "").toLowerCase().startsWith("zh") ? "zh" : "en";
   function applyLang() {
     document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
@@ -1092,85 +1528,86 @@
     document.querySelectorAll("[data-en]").forEach((el) => {
       el.textContent = lang === "zh" ? el.dataset.zh : el.dataset.en;
     });
-    updateDemoHint();
+    updateHint();
   }
-  document.getElementById("langBtn").onclick = () => {
-    lang = lang === "zh" ? "en" : "zh";
-    applyLang();
-  };
+  document.getElementById("langBtn").onclick = () => { lang = lang === "zh" ? "en" : "zh"; applyLang(); };
 
   // Theme switcher
-  const themeBtn = document.getElementById("themeBtn");
-  themeBtn.onclick = () => {
-    const isLight = document.body.classList.toggle("light");
-    themeBtn.textContent = isLight ? "🌙" : "☀️";
+  document.getElementById("themeBtn").onclick = () => document.body.classList.toggle("light");
+
+  // Copy Gatekeeper command
+  document.getElementById("copyXattr").onclick = async () => {
+    const btn = document.getElementById("copyXattr");
+    try {
+      await navigator.clipboard.writeText(document.getElementById("xattrCmd").textContent.trim());
+      btn.textContent = lang === "zh" ? "已复制" : "Copied";
+      setTimeout(() => { btn.textContent = lang === "zh" ? "复制" : "Copy"; }, 1500);
+    } catch {}
   };
 
-  // Copy helpers
-  function wireCopy(btnId, textFn) {
-    const btn = document.getElementById(btnId);
-    btn.onclick = async () => {
-      try {
-        await navigator.clipboard.writeText(textFn());
-        const prev = btn.textContent;
-        btn.textContent = lang === "zh" ? "已复制 ✓" : "Copied ✓";
-        setTimeout(() => { btn.textContent = prev; }, 1600);
-      } catch {}
-    };
-  }
-  wireCopy("copyInstall", () => document.getElementById("installCmd").textContent.trim());
-  wireCopy("copyCli", () =>
-    "git clone https://github.com/arronKler/cordkey.git && cd cordkey\nmake app-install && open /Applications/CordKey.app"
-  );
-
-  // Interactive Inline Remote Demo
-  let demoMode = "toggle";
+  // Interactive Hardware + Popover Simulator
+  let mode = "toggle";
+  let masterOn = true;
+  let hudOn = true;
   let isHeld = false;
-  let timerId = null;
+  let holdTimer = null;
+  let clockTimer = null;
   let elapsed = 0;
 
-  const remoteBtn = document.getElementById("demoRemoteBtn");
-  const hud = document.getElementById("demoHud");
-  const hudTimer = document.getElementById("demoHudTimer");
-  const mbPill = document.getElementById("demoMbPill");
-  const mbCore = document.getElementById("demoMbCore");
-  const mbTimer = document.getElementById("demoMbTimer");
-  const logText = document.getElementById("demoLogText");
-  const logState = document.getElementById("demoLogState");
-  const hintEl = document.getElementById("demoHint");
+  const centerBtn = document.getElementById("centerKeyBtn");
+  const volUpBtn = document.getElementById("volUpBtn");
+  const volDownBtn = document.getElementById("volDownBtn");
+  const liveHud = document.getElementById("liveHud");
+  const hudTimer = document.getElementById("hudTimer");
+  const mbStatus = document.getElementById("mbStatus");
+  const mbCore = document.getElementById("mbCore");
+  const mbTimer = document.getElementById("mbTimer");
+  const rowPlay = document.getElementById("rowPlay");
+  const rowVolUp = document.getElementById("rowVolUp");
+  const rowVolDown = document.getElementById("rowVolDown");
+  const popLog = document.getElementById("popFootLog");
+  const popDot = document.getElementById("popFootDot");
+  const hwHint = document.getElementById("hwHint");
 
-  function fmt(sec) {
-    const m = Math.floor(sec / 60);
-    const s = String(sec % 60).padStart(2, "0");
-    return `${m}:${s}`;
+  function fmt(sec) { return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`; }
+
+  function updateHint() {
+    const map = {
+      toggle: [
+        "Click once to toggle Right Option (60ms clean-audio settle). Click again or tap the HUD to release.",
+        "短按一次橙色按键开启「单击切换」（松手后 60ms 洁净触发），再按一次或点上方浮窗松开。"
+      ],
+      hold: [
+        "Press and hold the orange button to hold Right Option down; release to let go immediately.",
+        "按住橙色按键即持续按住右 Option，松手瞬间立即松开。"
+      ],
+      delay: [
+        "Short tap passes through Play/Pause; hold ≥ 300ms to engage Right Option.",
+        "短按保留原生播放/暂停，长按 ≥ 300ms 触发保持右 Option。"
+      ]
+    };
+    hwHint.textContent = map[mode][lang === "zh" ? 1 : 0];
   }
 
-  function updateDemoHint() {
-    if (demoMode === "toggle") {
-      hintEl.textContent = lang === "zh"
-        ? "点击一次橙色按键体验「单击切换」（松手后 60ms 触发），再点一次或点上方浮窗松开。"
-        : "Click the orange button once to toggle hold (60ms clean settle) — click again or click the HUD to release.";
-    } else {
-      hintEl.textContent = lang === "zh"
-        ? "按住橙色按键体验「按住保持」，松手即刻松开 Right Option。"
-        : "Press and hold the orange button to hold Right Option — release to let go immediately.";
-    }
+  function setLog(text, active) {
+    popLog.textContent = text;
+    popDot.classList.toggle("active", !!active);
   }
 
-  function engage(reason) {
+  function engage(msg) {
     if (isHeld) return;
     isHeld = true;
     elapsed = 0;
     hudTimer.textContent = "0:00";
     mbTimer.textContent = "0:00";
     mbTimer.style.display = "inline";
-    hud.classList.add("visible");
-    mbPill.classList.add("active");
+    mbStatus.classList.add("active");
     mbCore.setAttribute("fill", "#f95722");
-    logText.textContent = reason;
-    logState.textContent = "HELD";
-    clearInterval(timerId);
-    timerId = setInterval(() => {
+    rowPlay.classList.add("lit");
+    if (hudOn) liveHud.classList.add("visible");
+    setLog(msg, true);
+    clearInterval(clockTimer);
+    clockTimer = setInterval(() => {
       elapsed += 1;
       const t = fmt(elapsed);
       hudTimer.textContent = t;
@@ -1178,54 +1615,96 @@
     }, 1000);
   }
 
-  function release(reason) {
-    if (!isHeld) return;
+  function release(msg) {
+    clearTimeout(holdTimer);
+    if (!isHeld) { if (msg) setLog(msg, false); return; }
     isHeld = false;
-    clearInterval(timerId);
-    hud.classList.remove("visible");
-    mbPill.classList.remove("active");
+    clearInterval(clockTimer);
+    liveHud.classList.remove("visible");
+    mbStatus.classList.remove("active");
     mbCore.setAttribute("fill", "currentColor");
     mbTimer.style.display = "none";
-    logText.textContent = reason;
-    logState.textContent = "IDLE";
+    rowPlay.classList.remove("lit");
+    if (msg) setLog(msg, false);
   }
 
-  document.querySelectorAll(".demo-mode-btn").forEach((b) => {
+  document.querySelectorAll("#simModeSeg button").forEach((b) => {
     b.onclick = () => {
-      release("Mode changed → Right Option up");
-      demoMode = b.dataset.mode;
-      document.querySelectorAll(".demo-mode-btn").forEach((x) => x.classList.toggle("active", x === b));
-      updateDemoHint();
+      release("Mode switched → Right Option up");
+      mode = b.dataset.mode;
+      document.querySelectorAll("#simModeSeg button").forEach((x) => x.classList.toggle("active", x === b));
+      updateHint();
     };
   });
 
-  remoteBtn.addEventListener("pointerdown", (e) => {
+  const simMasterSw = document.getElementById("simMasterSw");
+  simMasterSw.onclick = () => {
+    masterOn = !masterOn;
+    simMasterSw.classList.toggle("off", !masterOn);
+    if (!masterOn) release("Paused — native headset controls restored");
+    else setLog("0x0C:0xCD · Active (Exclusive mode)", false);
+  };
+
+  const simHudSw = document.getElementById("simHudSw");
+  simHudSw.onclick = () => {
+    hudOn = !hudOn;
+    simHudSw.classList.toggle("off", !hudOn);
+    liveHud.classList.toggle("visible", hudOn && isHeld);
+  };
+
+  let armedToggleOn = false;
+  centerBtn.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    remoteBtn.classList.add("pressed");
-    if (demoMode === "hold") {
-      engage("HID 0x0C:0xCD down → Right Option held");
-    } else if (isHeld) {
-      release("2nd press down → Right Option released immediately");
+    centerBtn.classList.add("pressed");
+    if (!masterOn) { setLog("0x0C:0xCD · Native Play/Pause (paused)", false); return; }
+    if (mode === "hold") {
+      engage("0x0C:0xCD down → Right Option held");
+    } else if (mode === "delay") {
+      setLog("0x0C:0xCD holding… (waiting 300ms)", false);
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => {
+        if (centerBtn.classList.contains("pressed")) {
+          engage("0x0C:0xCD held ≥ 300ms → Right Option held");
+        }
+      }, 300);
     } else {
-      logText.textContent = "1st press down — waiting for clean release…";
+      if (isHeld) {
+        armedToggleOn = false;
+        release("2nd press down → Right Option released (0ms)");
+      } else {
+        armedToggleOn = true;
+        setLog("1st press down — waiting for clean release…", false);
+      }
     }
   });
 
-  function onPointerUp() {
-    if (!remoteBtn.classList.contains("pressed")) return;
-    remoteBtn.classList.remove("pressed");
-    if (demoMode === "hold") {
-      release("HID 0x0C:0xCD up → Right Option released");
-    } else if (!isHeld && logText.textContent.includes("waiting")) {
-      setTimeout(() => {
-        engage("Release + 60ms mic settle → Right Option held");
-      }, 60);
+  function onUp() {
+    if (!centerBtn.classList.contains("pressed")) return;
+    centerBtn.classList.remove("pressed");
+    if (!masterOn) return;
+    if (mode === "hold") {
+      release("0x0C:0xCD up → Right Option released");
+    } else if (mode === "delay") {
+      clearTimeout(holdTimer);
+      if (isHeld) release("0x0C:0xCD up → Right Option released");
+      else setLog("0x0C:0xCD short tap → Native Play/Pause passthrough", false);
+    } else if (armedToggleOn) {
+      armedToggleOn = false;
+      setTimeout(() => engage("Release + 60ms settle → Right Option held"), 60);
     }
   }
 
-  window.addEventListener("pointerup", onPointerUp);
-  window.addEventListener("pointercancel", onPointerUp);
-  hud.addEventListener("click", () => release("Floating HUD clicked → Right Option released"));
+  window.addEventListener("pointerup", onUp);
+  window.addEventListener("pointercancel", onUp);
+  liveHud.onclick = () => release("Floating HUD clicked → Right Option released");
+
+  function flashRow(row, msg) {
+    row.classList.add("lit");
+    setLog(msg, false);
+    setTimeout(() => row.classList.remove("lit"), 220);
+  }
+  volUpBtn.onclick = () => flashRow(rowVolUp, "0x0C:0xE9 → Native Volume + passthrough");
+  volDownBtn.onclick = () => flashRow(rowVolDown, "0x0C:0xEA → Native Volume − passthrough");
 
   applyLang();
 </script>

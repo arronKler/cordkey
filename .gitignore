@@ -2,5 +2,6 @@
 .swiftpm/
 bin/
 build/
+dist/
 CordKey.app/
 .DS_Store
