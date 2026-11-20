@@ -1529,6 +1529,17 @@
         </div>
       </div>
 
+      <div class="gatekeeper-note">
+        <div>
+          <strong data-en="First-launch approval required (both Homebrew &amp; DMG):" data-zh="首次打开需要手动放行一次（Homebrew 与 DMG 均适用）：">First-launch approval required (both Homebrew &amp; DMG):</strong>
+          <span style="color:var(--text-2);" data-en="CordKey is ad-hoc signed (not Apple-notarized yet), so macOS Gatekeeper prompts once on first launch. Approve in System Settings → Privacy &amp; Security → Open Anyway, or run:" data-zh="开源版目前为免费自签名（未经 Apple 公证），无论通过 Homebrew 还是 DMG 安装，首次打开都会触发系统 Gatekeeper 提示。请在「系统设置 → 隐私与安全性 → 仍要打开」放行一次，或在终端执行：">CordKey is ad-hoc signed (not Apple-notarized yet), so macOS Gatekeeper prompts once on first launch. Approve in System Settings → Privacy &amp; Security → Open Anyway, or run:</span>
+        </div>
+        <div class="cmd-inline">
+          <code id="xattrCmd">xattr -cr /Applications/CordKey.app &amp;&amp; open /Applications/CordKey.app</code>
+          <button class="copy-btn" id="copyXattr" type="button" data-en="Copy" data-zh="复制">Copy</button>
+        </div>
+      </div>
+
       <div class="steps-3">
         <div class="step-box">
           <div class="sn">STEP 01</div>
@@ -1537,24 +1548,13 @@
         </div>
         <div class="step-box">
           <div class="sn">STEP 02</div>
-          <strong data-en="Grant Accessibility" data-zh="授予辅助功能权限">Grant Accessibility</strong>
-          <span data-en="Click the CordKey menu bar icon → Open Settings → enable CordKey in Accessibility." data-zh="点击右上角线控图标 → 前往授权 → 在系统「辅助功能」中勾选 CordKey。">Click the CordKey menu bar icon → Open Settings → enable CordKey in Accessibility.</span>
+          <strong data-en="Approve &amp; Grant Accessibility" data-zh="首次放行并授予辅助功能">Approve &amp; Grant Accessibility</strong>
+          <span data-en="Allow first launch via Privacy &amp; Security (above), then enable CordKey in System Settings → Accessibility." data-zh="先按上方提示完成首次放行，打开后点菜单栏线控图标 → 前往授权，在「辅助功能」中勾选 CordKey。">Allow first launch via Privacy &amp; Security (above), then enable CordKey in System Settings → Accessibility.</span>
         </div>
         <div class="step-box">
           <div class="sn">STEP 03</div>
           <strong data-en="Bind &amp; Talk" data-zh="选择按键即可开用">Bind &amp; Talk</strong>
           <span data-en="Pick Right Option / Fn / F13 (or record any chord), plug in your headset, and go." data-zh="选定右 Option / Fn / F13（或直接按键录制），插上耳机即刻生效。">Pick Right Option / Fn / F13 (or record any chord), plug in your headset, and go.</span>
-        </div>
-      </div>
-
-      <div class="gatekeeper-note">
-        <div>
-          <strong data-en="First-launch macOS Gatekeeper note:" data-zh="首次打开放行说明：">First-launch macOS Gatekeeper note:</strong>
-          <span style="color:var(--text-2);" data-en="CordKey is ad-hoc signed (not notarized). Clear quarantine once in Terminal, or approve in System Settings → Privacy &amp; Security → Open Anyway:" data-zh="开源版目前为免费自签名（未公证）。安装完成后在终端执行一次放行命令，或在「系统设置 → 隐私与安全性 → 仍要打开」授权：">CordKey is ad-hoc signed (not notarized). Clear quarantine once in Terminal, or approve in System Settings → Privacy &amp; Security → Open Anyway:</span>
-        </div>
-        <div class="cmd-inline">
-          <code id="xattrCmd">xattr -cr /Applications/CordKey.app &amp;&amp; open /Applications/CordKey.app</code>
-          <button class="copy-btn" id="copyXattr" type="button" data-en="Copy" data-zh="复制">Copy</button>
         </div>
       </div>
 
