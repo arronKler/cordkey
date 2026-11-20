@@ -1501,12 +1501,12 @@
       <div class="install-methods">
         <div class="method-card recommended">
           <div>
-            <div class="method-badge" data-en="OPTION 01 · RECOMMENDED · ZERO GATEKEEPER PROMPT" data-zh="方式 01 · 推荐 · 免 Gatekeeper 拦截">OPTION 01 · RECOMMENDED · ZERO GATEKEEPER PROMPT</div>
+            <div class="method-badge" data-en="OPTION 01 · RECOMMENDED · APP + CLI" data-zh="方式 01 · 推荐 · 应用 + 命令行">OPTION 01 · RECOMMENDED · APP + CLI</div>
             <div class="method-title" data-en="Install via Homebrew" data-zh="通过 Homebrew 一行安装">Install via Homebrew</div>
-            <p class="method-desc" data-en="Installs the universal CordKey.app into /Applications and links the cordkey CLI into your PATH — no manual quarantine step needed." data-zh="自动安装通用版 CordKey.app 到「应用程序」并配置 cordkey 命令行，无需手动放行隔离属性，后续可直接 brew upgrade 升级。">Installs the universal CordKey.app into /Applications and links the cordkey CLI into your PATH — no manual quarantine step needed.</p>
+            <p class="method-desc" data-en="Installs the universal CordKey.app into /Applications, links the cordkey CLI into your PATH, and supports easy upgrades via brew upgrade." data-zh="自动安装通用版 CordKey.app 到「应用程序」并配置 cordkey 命令行，后续可直接 brew upgrade 一键升级。">Installs the universal CordKey.app into /Applications, links the cordkey CLI into your PATH, and supports easy upgrades via brew upgrade.</p>
           </div>
           <div class="cmd-inline">
-            <code id="brewCmd">brew install --cask --no-quarantine arronKler/tap/cordkey</code>
+            <code id="brewCmd">brew install --cask arronKler/tap/cordkey</code>
             <button class="copy-btn" id="copyBrew" type="button" data-en="Copy" data-zh="复制">Copy</button>
           </div>
         </div>
@@ -1549,8 +1549,8 @@
 
       <div class="gatekeeper-note">
         <div>
-          <strong data-en="Using the DMG? First-launch Gatekeeper note:" data-zh="使用 DMG 安装？首次打开放行说明：">Using the DMG? First-launch Gatekeeper note:</strong>
-          <span style="color:var(--text-2);" data-en="CordKey is ad-hoc signed (not notarized). Clear quarantine once after dragging to Applications, or allow in System Settings → Privacy &amp; Security:" data-zh="开源版目前为免费签名，拖入「应用程序」后在终端执行一次放行，或在「系统设置 → 隐私与安全性」点仍要打开：">CordKey is ad-hoc signed (not notarized). Clear quarantine once after dragging to Applications, or allow in System Settings → Privacy &amp; Security:</span>
+          <strong data-en="First-launch macOS Gatekeeper note:" data-zh="首次打开放行说明：">First-launch macOS Gatekeeper note:</strong>
+          <span style="color:var(--text-2);" data-en="CordKey is ad-hoc signed (not notarized). Clear quarantine once in Terminal, or approve in System Settings → Privacy &amp; Security → Open Anyway:" data-zh="开源版目前为免费自签名（未公证）。安装完成后在终端执行一次放行命令，或在「系统设置 → 隐私与安全性 → 仍要打开」授权：">CordKey is ad-hoc signed (not notarized). Clear quarantine once in Terminal, or approve in System Settings → Privacy &amp; Security → Open Anyway:</span>
         </div>
         <div class="cmd-inline">
           <code id="xattrCmd">xattr -cr /Applications/CordKey.app &amp;&amp; open /Applications/CordKey.app</code>

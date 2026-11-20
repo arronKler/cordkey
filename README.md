@@ -82,16 +82,16 @@ Pure Swift using only Apple system frameworks: `IOKit`, `CoreGraphics`, `CoreAud
 
 ## Quick Start
 
-### Option 1 — Homebrew (Recommended — Zero Gatekeeper Friction)
+### Option 1 — Homebrew (Recommended)
 
 Installs the universal **CordKey.app** into `/Applications` and links the `cordkey` CLI into your `PATH`:
 
 ```bash
-brew install --cask --no-quarantine arronKler/tap/cordkey
-open /Applications/CordKey.app
+brew install --cask arronKler/tap/cordkey
 ```
 
 > Upgrade anytime with `brew upgrade --cask arronKler/tap/cordkey`, or remove cleanly with `brew uninstall --cask --zap cordkey`.
+> Because CordKey is ad-hoc signed (not notarized), approve the first launch once in **System Settings → Privacy & Security → Open Anyway**, or run `xattr -cr /Applications/CordKey.app && open /Applications/CordKey.app`.
 
 ### Option 2 — Official Universal DMG (Apple Silicon & Intel)
 

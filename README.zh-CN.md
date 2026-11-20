@@ -30,16 +30,16 @@ CordKey 是一个轻量、零外部依赖的原生 macOS 状态栏应用（`Cord
 
 ## 快速开始
 
-### 方式一：Homebrew 一行安装（推荐，零 Gatekeeper 拦截）
+### 方式一：Homebrew 一行安装（推荐）
 
 自动安装 Universal 通用版 **`CordKey.app`** 到 `/Applications`，并同步将 `cordkey` 命令行链接进 `PATH`：
 
 ```bash
-brew install --cask --no-quarantine arronKler/tap/cordkey
-open /Applications/CordKey.app
+brew install --cask arronKler/tap/cordkey
 ```
 
 > 后续升级：`brew upgrade --cask arronKler/tap/cordkey`；彻底卸载：`brew uninstall --cask --zap cordkey`。
+> 开源版为免费自签名（未公证），首次打开请在 **系统设置 → 隐私与安全性 → 仍要打开** 放行一次，或执行 `xattr -cr /Applications/CordKey.app && open /Applications/CordKey.app`。
 
 ### 方式二：下载官方 Universal DMG 安装包
 

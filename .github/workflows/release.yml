@@ -121,10 +121,9 @@ jobs:
 
           Turn wired USB-C EarPods, universal USB/HID headsets (Consumer `0x0C` & Telephony `0x0B`), and Bluetooth headsets into Mac keyboard shortcuts — built for Push-to-Talk voice dictation and meetings.
 
-          ### Option 1 — Homebrew (Recommended — Zero Gatekeeper Prompt)
+          ### Option 1 — Homebrew (Recommended)
           ```bash
-          brew install --cask --no-quarantine arronKler/tap/cordkey
-          open /Applications/CordKey.app
+          brew install --cask arronKler/tap/cordkey
           ```
           Installs **CordKey.app** into `/Applications` and links the `cordkey` CLI into your `PATH`.
 
@@ -133,7 +132,7 @@ jobs:
           2. Open the `.dmg` and **drag CordKey.app into Applications first** (do not double-click inside the DMG).
           3. Launch **CordKey** from Applications and grant **Accessibility** permission when prompted.
 
-          > **First-launch Gatekeeper note**: CordKey is currently ad-hoc signed (not Apple-notarized). After dragging to Applications, clear quarantine once or approve in **System Settings → Privacy & Security → Open Anyway**:
+          > **First-launch Gatekeeper note**: CordKey is currently ad-hoc signed (not Apple-notarized). Approve the first launch in **System Settings → Privacy & Security → Open Anyway**, or run:
           > ```bash
           > xattr -cr /Applications/CordKey.app && open /Applications/CordKey.app
           > ```
