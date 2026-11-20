@@ -82,18 +82,30 @@ Pure Swift using only Apple system frameworks: `IOKit`, `CoreGraphics`, `CoreAud
 
 ## Quick Start
 
-### Option 1 — Download Official Release (Recommended)
+### Option 1 — Homebrew (Recommended — Zero Gatekeeper Friction)
 
-No Xcode or compilation required. Universal binary for **Apple Silicon (M1–M4) & Intel** on **macOS 13.0+**:
+Installs the universal **CordKey.app** into `/Applications` and links the `cordkey` CLI into your `PATH`:
+
+```bash
+brew install --cask --no-quarantine arronKler/tap/cordkey
+open /Applications/CordKey.app
+```
+
+> Upgrade anytime with `brew upgrade --cask arronKler/tap/cordkey`, or remove cleanly with `brew uninstall --cask --zap cordkey`.
+
+### Option 2 — Official Universal DMG (Apple Silicon & Intel)
+
+No Homebrew, Xcode, or compilation required (**macOS 13.0+**):
 
 1. Download **`CordKey-*-macos-universal.dmg`** from [**GitHub Releases**](https://github.com/arronKler/cordkey/releases/latest).
-2. Open the `.dmg` and drag **CordKey.app** into **Applications**.
+2. Open the `.dmg` and **drag `CordKey.app` into Applications first** (do not double-click inside the DMG).
 3. Launch **CordKey** from Applications.
 
-> **First-launch Gatekeeper note**: CordKey is currently ad-hoc signed (no paid Apple Developer ID certificate yet). If macOS warns that the developer cannot be verified, **Right-click → Open** on `CordKey.app`, or run:
+> **First-launch Gatekeeper note**: CordKey is currently ad-hoc signed (not Apple-notarized). Before first launch — or if macOS shows a verification dialog — run:
 > ```bash
 > xattr -cr /Applications/CordKey.app && open /Applications/CordKey.app
 > ```
+> Alternatively, approve once in **System Settings → Privacy & Security → Security → Open Anyway**.
 
 ### Grant macOS Permissions (One-Time Setup)
 
@@ -102,7 +114,7 @@ No Xcode or compilation required. Universal binary for **Apple Silicon (M1–M4)
 3. If macOS prompts for **Input Monitoring** (or the Input Monitoring banner appears), allow **CordKey** under **System Settings → Privacy & Security → Input Monitoring**.
 
 <details>
-<summary><strong>Option 2 — Build from Source (Developers)</strong></summary>
+<summary><strong>Option 3 — Build from Source (Developers)</strong></summary>
 
 Requires Xcode Command Line Tools (`xcode-select --install`):
 

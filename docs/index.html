@@ -1439,11 +1439,22 @@
         </div>
       </div>
 
+      <div class="gatekeeper-note" style="margin-top:0;margin-bottom:14px;border-color:rgba(249,87,34,0.34);background:rgba(249,87,34,0.06);">
+        <div>
+          <strong style="color:var(--accent);" data-en="Recommended via Homebrew (zero Gatekeeper prompt):" data-zh="推荐 Homebrew 一行安装（免 Gatekeeper 拦截）：">Recommended via Homebrew (zero Gatekeeper prompt):</strong>
+          <span style="color:var(--text-2);" data-en="Installs CordKey.app into /Applications and links the cordkey CLI." data-zh="自动安装 CordKey.app 到「应用程序」并配置 cordkey 命令行。">Installs CordKey.app into /Applications and links the cordkey CLI.</span>
+        </div>
+        <div class="cmd-inline">
+          <code id="brewCmd">brew install --cask --no-quarantine arronKler/tap/cordkey</code>
+          <button class="copy-btn" id="copyBrew" type="button" data-en="Copy" data-zh="复制">Copy</button>
+        </div>
+      </div>
+
       <div class="steps-3">
         <div class="step-box">
           <div class="sn">STEP 01</div>
-          <strong data-en="Open the DMG" data-zh="打开 DMG 安装包">Open the DMG</strong>
-          <span data-en="Download the official universal release and drag CordKey.app into Applications." data-zh="下载官方通用版 DMG，将 CordKey.app 拖入「应用程序」文件夹。">Download the official universal release and drag CordKey.app into Applications.</span>
+          <strong data-en="Install to Applications" data-zh="安装到应用程序">Install to Applications</strong>
+          <span data-en="Run the Homebrew command above, or download the DMG and drag CordKey.app into Applications first (don't launch from inside the DMG)." data-zh="使用上方 Homebrew 一行安装，或下载 DMG 后先将 CordKey.app 拖入「应用程序」（勿在 DMG 内直接双击）。">Run the Homebrew command above, or download the DMG and drag CordKey.app into Applications first (don't launch from inside the DMG).</span>
         </div>
         <div class="step-box">
           <div class="sn">STEP 02</div>
@@ -1459,8 +1470,8 @@
 
       <div class="gatekeeper-note">
         <div>
-          <strong data-en="First-launch macOS Gatekeeper note:" data-zh="首次打开若提示“无法验证开发者”：">First-launch macOS Gatekeeper note:</strong>
-          <span style="color:var(--text-2);" data-en="CordKey is ad-hoc signed (no paid Developer ID yet). Right-click → Open, or clear quarantine once:" data-zh="开源版目前为免费签名，在应用程序里「右键 → 打开」，或在终端执行一次：">CordKey is ad-hoc signed (no paid Developer ID yet). Right-click → Open, or clear quarantine once:</span>
+          <strong data-en="Using the DMG? First-launch Gatekeeper note:" data-zh="使用 DMG 安装？首次打开放行说明：">Using the DMG? First-launch Gatekeeper note:</strong>
+          <span style="color:var(--text-2);" data-en="CordKey is ad-hoc signed (not notarized). Clear quarantine once after dragging to Applications, or allow in System Settings → Privacy &amp; Security:" data-zh="开源版目前为免费签名，拖入「应用程序」后在终端执行一次放行，或在「系统设置 → 隐私与安全性」点仍要打开：">CordKey is ad-hoc signed (not notarized). Clear quarantine once after dragging to Applications, or allow in System Settings → Privacy &amp; Security:</span>
         </div>
         <div class="cmd-inline">
           <code id="xattrCmd">xattr -cr /Applications/CordKey.app &amp;&amp; open /Applications/CordKey.app</code>
@@ -1535,15 +1546,20 @@ make app-install &amp;&amp; open /Applications/CordKey.app
   // Theme switcher
   document.getElementById("themeBtn").onclick = () => document.body.classList.toggle("light");
 
-  // Copy Gatekeeper command
-  document.getElementById("copyXattr").onclick = async () => {
-    const btn = document.getElementById("copyXattr");
-    try {
-      await navigator.clipboard.writeText(document.getElementById("xattrCmd").textContent.trim());
-      btn.textContent = lang === "zh" ? "已复制" : "Copied";
-      setTimeout(() => { btn.textContent = lang === "zh" ? "复制" : "Copy"; }, 1500);
-    } catch {}
-  };
+  // Copy command helpers (Homebrew + Gatekeeper)
+  function bindCopy(btnId, codeId) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(document.getElementById(codeId).textContent.trim());
+        btn.textContent = lang === "zh" ? "已复制" : "Copied";
+        setTimeout(() => { btn.textContent = lang === "zh" ? "复制" : "Copy"; }, 1500);
+      } catch {}
+    };
+  }
+  bindCopy("copyBrew", "brewCmd");
+  bindCopy("copyXattr", "xattrCmd");
 
   // Interactive Hardware + Popover Simulator
   let mode = "toggle";

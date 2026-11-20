@@ -28,21 +28,33 @@ CordKey 是一个轻量、零外部依赖的原生 macOS 状态栏应用（`Cord
   - **分应用规则**：可在影音应用（Music、IINA、QuickTime）中自动暂停映射，或为飞书、Zoom、Discord 等会议软件单独覆写播放键。
   - **蓝牙耳机兼容模式**：无需抢占 USB HID，通过「单击切换」兼容 AirPods、Sony 等蓝牙耳机播放键。
 
-## 快速开始（推荐直接下载官方安装包）
+## 快速开始
 
-无需 Xcode 或本地编译，支持 **Apple Silicon (M1–M4) 与 Intel** 通用版本（macOS 13.0+）：
+### 方式一：Homebrew 一行安装（推荐，零 Gatekeeper 拦截）
+
+自动安装 Universal 通用版 **`CordKey.app`** 到 `/Applications`，并同步将 `cordkey` 命令行链接进 `PATH`：
+
+```bash
+brew install --cask --no-quarantine arronKler/tap/cordkey
+open /Applications/CordKey.app
+```
+
+> 后续升级：`brew upgrade --cask arronKler/tap/cordkey`；彻底卸载：`brew uninstall --cask --zap cordkey`。
+
+### 方式二：下载官方 Universal DMG 安装包
+
+无需 Homebrew 或 Xcode，支持 **Apple Silicon (M1–M4) 与 Intel**（macOS 13.0+）：
 
 1. 前往 [**GitHub Releases**](https://github.com/arronKler/cordkey/releases/latest) 下载最新的 **`CordKey-*-macos-universal.dmg`**。
-2. 双击打开 `.dmg`，将 **CordKey.app** 拖入 **Applications（应用程序）** 文件夹。
-3. 打开 **CordKey**，点击右上角状态栏线控胶囊图标，在提示横幅中点击 **「前往授权」** 并在 **系统设置 → 隐私与安全性 → 辅助功能** 勾选 **CordKey**。
-
-> **首次打开提示“无法验证开发者”？** 目前开源版本为本地/CI 免费签名（未购买付费 Apple Developer ID 证书）。在应用程序里对 `CordKey.app` **右键 → 打开**，或终端执行：
-> ```bash
-> xattr -cr /Applications/CordKey.app && open /Applications/CordKey.app
-> ```
+2. 双击打开 `.dmg`，**先将 `CordKey.app` 拖入「应用程序（Applications）」**（请勿直接在 DMG 内双击打开）。
+3. 首次打开前（或遇到“无法验证开发者”提示时），在终端执行一次放行命令，或在 **系统设置 → 隐私与安全性 → 安全性 → 仍要打开** 授权：
+   ```bash
+   xattr -cr /Applications/CordKey.app && open /Applications/CordKey.app
+   ```
+4. 打开后点击右上角状态栏线控胶囊图标，点 **「前往授权」** 并在 **系统设置 → 隐私与安全性 → 辅助功能** 中勾选 **CordKey**。
 
 <details>
-<summary><strong>开发者源码构建（可选）</strong></summary>
+<summary><strong>方式三：开发者源码构建（可选）</strong></summary>
 
 ```bash
 git clone https://github.com/arronKler/cordkey.git
