@@ -1,0 +1,6 @@
+.build/
+.swiftpm/
+bin/
+build/
+CordKey.app/
+.DS_Store
