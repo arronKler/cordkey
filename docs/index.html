@@ -652,6 +652,7 @@
   section {
     padding: 76px 0;
     border-top: 1px solid var(--line);
+    scroll-margin-top: 64px;
   }
 
   .sec-head {
@@ -882,6 +883,70 @@
     flex-wrap: wrap;
   }
 
+  .install-methods {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .method-card {
+    background: var(--bg-inset);
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .method-card.recommended {
+    border-color: rgba(249, 87, 34, 0.42);
+    background: linear-gradient(180deg, rgba(249, 87, 34, 0.08) 0%, var(--bg-inset) 65%);
+  }
+
+  .method-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--text-2);
+    margin-bottom: 6px;
+  }
+
+  .method-card.recommended .method-badge { color: var(--orange); }
+
+  .method-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin-bottom: 6px;
+  }
+
+  .method-desc {
+    font-size: 12.5px;
+    color: var(--text-2);
+    line-height: 1.55;
+  }
+
+  .method-card .cmd-inline {
+    width: 100%;
+    justify-content: space-between;
+    padding: 8px 11px;
+    overflow-x: auto;
+  }
+
+  .method-card .cmd-inline code {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 820px) {
+    .install-methods { grid-template-columns: 1fr; }
+  }
+
   .steps-3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1027,7 +1092,7 @@
       <button class="nav-pill" id="themeBtn" type="button" aria-label="Toggle theme">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"/></svg>
       </button>
-      <a class="nav-pill dl" href="https://github.com/arronKler/cordkey/releases/latest">
+      <a class="nav-pill dl" href="#download">
         <span data-en="Download" data-zh="下载">Download</span>
       </a>
     </div>
@@ -1054,9 +1119,9 @@
     </p>
 
     <div class="hero-actions">
-      <a class="btn-download" id="primaryDownloadBtn" href="https://github.com/arronKler/cordkey/releases/latest/download/CordKey-1.0.0-macos-universal.dmg">
+      <a class="btn-download" href="#download">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span data-en="Download for macOS (.dmg)" data-zh="下载 macOS 安装包 (.dmg)">Download for macOS (.dmg)</span>
+        <span data-en="Download &amp; Install" data-zh="下载与安装">Download &amp; Install</span>
       </a>
       <a class="btn-ghost" href="https://github.com/arronKler/cordkey" target="_blank" rel="noopener">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
@@ -1425,28 +1490,42 @@
           <img src="assets/icon.png" width="58" height="58" style="border-radius:14px;" alt="CordKey Icon" />
           <div>
             <div style="font-size:18px;font-weight:700;letter-spacing:-0.02em;">CordKey for macOS</div>
-            <div class="mono-id" id="cardReleaseMeta">v1.0.0 · Universal (arm64 + x86_64) · macOS 13.0+ · DMG</div>
+            <div class="mono-id" id="cardReleaseMeta">v1.0.0 · Universal (arm64 + x86_64) · macOS 13.0+ · Homebrew &amp; DMG</div>
           </div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <a class="btn-download" id="cardDownloadBtn" href="https://github.com/arronKler/cordkey/releases/latest/download/CordKey-1.0.0-macos-universal.dmg">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span data-en="Download DMG" data-zh="下载 DMG 安装包">Download DMG</span>
-          </a>
-          <a class="btn-ghost" href="https://github.com/arronKler/cordkey/releases/latest" target="_blank" rel="noopener">
-            <span data-en="Release Notes" data-zh="版本说明">Release Notes</span>
-          </a>
-        </div>
+        <a class="btn-ghost" href="https://github.com/arronKler/cordkey/releases/latest" target="_blank" rel="noopener">
+          <span data-en="Release Notes &amp; SHA-256" data-zh="版本说明与校验和">Release Notes &amp; SHA-256</span>
+        </a>
       </div>
 
-      <div class="gatekeeper-note" style="margin-top:0;margin-bottom:14px;border-color:rgba(249,87,34,0.34);background:rgba(249,87,34,0.06);">
-        <div>
-          <strong style="color:var(--accent);" data-en="Recommended via Homebrew (zero Gatekeeper prompt):" data-zh="推荐 Homebrew 一行安装（免 Gatekeeper 拦截）：">Recommended via Homebrew (zero Gatekeeper prompt):</strong>
-          <span style="color:var(--text-2);" data-en="Installs CordKey.app into /Applications and links the cordkey CLI." data-zh="自动安装 CordKey.app 到「应用程序」并配置 cordkey 命令行。">Installs CordKey.app into /Applications and links the cordkey CLI.</span>
+      <div class="install-methods">
+        <div class="method-card recommended">
+          <div>
+            <div class="method-badge" data-en="OPTION 01 · RECOMMENDED · ZERO GATEKEEPER PROMPT" data-zh="方式 01 · 推荐 · 免 Gatekeeper 拦截">OPTION 01 · RECOMMENDED · ZERO GATEKEEPER PROMPT</div>
+            <div class="method-title" data-en="Install via Homebrew" data-zh="通过 Homebrew 一行安装">Install via Homebrew</div>
+            <p class="method-desc" data-en="Installs the universal CordKey.app into /Applications and links the cordkey CLI into your PATH — no manual quarantine step needed." data-zh="自动安装通用版 CordKey.app 到「应用程序」并配置 cordkey 命令行，无需手动放行隔离属性，后续可直接 brew upgrade 升级。">Installs the universal CordKey.app into /Applications and links the cordkey CLI into your PATH — no manual quarantine step needed.</p>
+          </div>
+          <div class="cmd-inline">
+            <code id="brewCmd">brew install --cask --no-quarantine arronKler/tap/cordkey</code>
+            <button class="copy-btn" id="copyBrew" type="button" data-en="Copy" data-zh="复制">Copy</button>
+          </div>
         </div>
-        <div class="cmd-inline">
-          <code id="brewCmd">brew install --cask --no-quarantine arronKler/tap/cordkey</code>
-          <button class="copy-btn" id="copyBrew" type="button" data-en="Copy" data-zh="复制">Copy</button>
+
+        <div class="method-card">
+          <div>
+            <div class="method-badge" data-en="OPTION 02 · DIRECT INSTALLER" data-zh="方式 02 · 官方直装镜像">OPTION 02 · DIRECT INSTALLER</div>
+            <div class="method-title" data-en="Download Universal DMG" data-zh="下载官方通用 DMG 安装包">Download Universal DMG</div>
+            <p class="method-desc" data-en="No Homebrew required. Open the DMG and drag CordKey.app into Applications first (don't double-click inside the DMG)." data-zh="无需安装 Homebrew。打开 DMG 后先将 CordKey.app 拖入「应用程序」文件夹（请勿在 DMG 内直接双击打开）。">No Homebrew required. Open the DMG and drag CordKey.app into Applications first (don't double-click inside the DMG).</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <a class="btn-download" id="cardDownloadBtn" href="https://github.com/arronKler/cordkey/releases/latest/download/CordKey-1.0.0-macos-universal.dmg">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span data-en="Download .dmg" data-zh="下载 .dmg 安装包">Download .dmg</span>
+            </a>
+            <a class="btn-ghost" id="cardZipBtn" href="https://github.com/arronKler/cordkey/releases/latest/download/CordKey-1.0.0-macos-universal.zip" style="padding:11px 16px;font-size:13px;">
+              <span data-en=".zip Archive" data-zh=".zip 压缩包">.zip Archive</span>
+            </a>
+          </div>
         </div>
       </div>
 
@@ -1454,7 +1533,7 @@
         <div class="step-box">
           <div class="sn">STEP 01</div>
           <strong data-en="Install to Applications" data-zh="安装到应用程序">Install to Applications</strong>
-          <span data-en="Run the Homebrew command above, or download the DMG and drag CordKey.app into Applications first (don't launch from inside the DMG)." data-zh="使用上方 Homebrew 一行安装，或下载 DMG 后先将 CordKey.app 拖入「应用程序」（勿在 DMG 内直接双击）。">Run the Homebrew command above, or download the DMG and drag CordKey.app into Applications first (don't launch from inside the DMG).</span>
+          <span data-en="Choose Homebrew or the DMG above so CordKey.app lives in /Applications." data-zh="选择上方 Homebrew 或 DMG 任一方式，将 CordKey.app 安装到「应用程序」。">Choose Homebrew or the DMG above so CordKey.app lives in /Applications.</span>
         </div>
         <div class="step-box">
           <div class="sn">STEP 02</div>
@@ -1520,14 +1599,19 @@ make app-install &amp;&amp; open /Applications/CordKey.app
       const rel = await res.json();
       const tag = rel.tag_name || "v1.0.0";
       const dmg = (rel.assets || []).find((a) => a.name && a.name.endsWith(".dmg"));
-      const url = dmg ? dmg.browser_download_url : rel.html_url;
-      if (url) {
-        document.getElementById("primaryDownloadBtn").href = url;
-        document.getElementById("cardDownloadBtn").href = url;
+      const zip = (rel.assets || []).find((a) => a.name && a.name.endsWith(".zip"));
+      const dmgUrl = dmg ? dmg.browser_download_url : rel.html_url;
+      if (dmgUrl) {
+        const cardBtn = document.getElementById("cardDownloadBtn");
+        if (cardBtn) cardBtn.href = dmgUrl;
+      }
+      if (zip && zip.browser_download_url) {
+        const zipBtn = document.getElementById("cardZipBtn");
+        if (zipBtn) zipBtn.href = zip.browser_download_url;
       }
       document.querySelector(".brand-tag").textContent = tag;
       document.getElementById("releaseVerSpec").textContent = `${tag} Universal (Apple Silicon & Intel)`;
-      document.getElementById("cardReleaseMeta").textContent = `${tag} · Universal (arm64 + x86_64) · macOS 13.0+ · DMG`;
+      document.getElementById("cardReleaseMeta").textContent = `${tag} · Universal (arm64 + x86_64) · macOS 13.0+ · Homebrew & DMG`;
     } catch {}
   })();
 
